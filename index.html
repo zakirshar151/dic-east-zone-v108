@@ -78,7 +78,8 @@ function districtCard(d){
 }
 function dashboard(){
   const c=visibleCases(), cc=caseTypeCounts(c);
-  const districtCards=Object.keys(stations).map(districtCard).join("");
+  const districtList=currentUser.role==="agent"?Object.keys(stations).filter(d=>d===currentUser.district):Object.keys(stations);
+  const districtCards=districtList.map(districtCard).join("");
   const pending=c.filter(x=>String(x.status||"").includes("Pending")).length;
   return `<div class="card dashboardHero">
     <div><h2>🏠 ${currentUser.role==="admin"?"Admin":"Agent"} Dashboard</h2>
