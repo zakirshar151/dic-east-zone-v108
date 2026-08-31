@@ -45,7 +45,8 @@ function cases(){let c=data();if(currentUser.role==="agent")c=c.filter(x=>x.crea
 function approvals(){if(currentUser.role!=="admin")return '<div class="card"><h2>Approval Queue</h2><div class="notice">Admin only.</div></div>';let c=data().filter(x=>x.status==="Pending Admin Approval");return '<div class="card"><h2>✅ Approval Queue</h2>'+ (c.length?c.map(x=>'<div class="queue"><b>Case '+x.id+'</b><p>'+x.ps+' • '+(x.complainant||"No complainant")+'</p><button class="success btn" onclick="approve(\''+x.id+'\')">Approve &amp; Open Data Form</button></div>').join(""):'<div class="empty">No pending approvals.</div>')+'</div>'}
 function approve(id){let c=data(),x=c.find(a=>a.id===id);x.status="Approved — Data Form Pending";x.history.push({at:new Date().toISOString(),by:"admin",action:"Approved — Data Form Pending"});save(c);show("approvals")}
 function cdrButton(kind,val){
-return '<button class="cdrBtn" onclick="cdrQuery(\''+kind+'\',\''+String(val||"").replace(/'/g,"\\\\'")+'\')">CDRs by '+(kind==="imei"?"IMEI":"MSISDN")+'</button>'
+const safe=String(val||"");
+return `<button class="cdrBtn" onclick='cdrQuery(${JSON.stringify(kind)},${JSON.stringify(safe)})'>CDRs by ${kind==="imei"?"IMEI":"MSISDN"}</button>`;
 }
 function fmtDMY(v,sep){
 if(!v)return "";
