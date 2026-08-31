@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DIC East Zone — Case Workflow v108</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef4f8;color:#102746}.header{background:#062b52;color:#fff;padding:25px 22px;position:relative}.header h1{margin:0 125px 8px 0;font-size:31px}.header p{margin:0;color:#d9e7f4;font-size:17px}.logout{position:absolute;right:22px;top:25px;background:#cf2940;color:#fff;border:0;border-radius:12px;padding:14px 20px;font-weight:700;font-size:16px}.menuBtn{position:absolute;right:22px;top:88px;background:#1769e8;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:27px;display:none}.loginWrap{min-height:100vh;background:#082e59;display:flex;align-items:center;justify-content:center;padding:28px}.login{background:#fff;border-radius:30px;width:min(620px,100%);padding:48px}.login h1{font-size:38px;margin:12px 0}.sub{color:#748399;font-size:20px;margin-bottom:28px}.tabs{display:flex;gap:10px;margin-bottom:22px}.tabs button{flex:1;padding:14px;border:0;border-radius:10px;background:#e8eff7;color:#16355a;font-size:16px;font-weight:700}.tabs button.active{background:#1769e8;color:#fff}label{display:block;font-size:15px;font-weight:700;margin:14px 0 7px}input,select,textarea{width:100%;padding:13px;border:1px solid #cbd5df;border-radius:10px;font-size:16px;background:#fff}textarea{min-height:90px}.primary,.btn{border:0;border-radius:10px;padding:13px 17px;background:#1769e8;color:#fff;font-size:15px;font-weight:700;cursor:pointer}.primary{width:100%;margin-top:20px}.secondary{border:0;border-radius:10px;padding:12px 16px;background:#e8eff7;color:#173555;font-weight:700;cursor:pointer}.success{background:#159447!important;color:#fff!important}.danger{background:#cf2940!important;color:#fff!important}.app{display:none}.content{padding:25px 20px;max-width:1150px;margin:auto}.card{background:#fff;border-radius:18px;padding:23px;box-shadow:0 2px 10px #193b5a18;margin-bottom:19px}.side{background:#062443;color:#e7f0f9;padding:18px;display:block}.navitem{padding:13px 9px;font-size:16px;cursor:pointer;border-radius:9px}.navitem:hover,.activeNav{background:#1769e8}.section{color:#86a7c9;font-weight:700;font-size:13px;margin-top:18px;padding:0 8px 5px}.layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 125px)}.tableWrap{overflow:auto}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:11px;border-bottom:1px solid #e1e7ec;text-align:left;white-space:nowrap}.badge{display:inline-block;padding:6px 9px;border-radius:999px;background:#e8eff7;font-size:12px;font-weight:700}.pending{background:#fff2cf;color:#8a5a00}.approved{background:#ddf5e7;color:#0d6a35}.rejected{background:#ffe0e5;color:#9b1e31}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.full{grid-column:1/-1}.actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}.notice{background:#eef7ff;border-left:4px solid #1769e8;padding:13px;border-radius:8px;margin:12px 0}.queue{border:1px solid #d5dee7;border-radius:14px;padding:16px;margin:11px 0}.empty{padding:28px;text-align:center;color:#718095}.attachment{padding:9px 11px;background:#f6f9fc;border:1px solid #dde5ed;border-radius:9px;margin:6px 0}.inlineField{display:flex;gap:6px;align-items:center}.inlineField input{min-width:0}.cdrBtn{border:0;border-radius:7px;padding:9px 10px;background:#1769e8;color:#fff;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer}.hidden{display:none!important}
+.cdrModal{position:fixed;inset:0;background:#0008;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.cdrPanel{background:#fff;width:min(850px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:20px;box-shadow:0 10px 40px #0004}
+.cdrPanel h2{margin:0 0 8px}.cdrPanel textarea{min-height:300px;font-family:monospace;line-height:1.5}
+.cdrTools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.smallNote{font-size:13px;color:#68788d}
+.copyOk{color:#159447;font-weight:700;min-height:20px}
+@media(max-width:800px){.layout{display:block}.side{display:none;position:absolute;left:0;right:0;z-index:30}.menuBtn{display:block}.header h1{font-size:28px;margin-right:105px}.content{padding:18px 14px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.login{padding:32px 25px}.card{padding:19px}}
+</style></head><body>
+<div id="loginPage" class="loginWrap"><div class="login"><div style="font-size:44px">🪪</div><h1>DIC East Zone</h1><div class="sub">Authorized Access</div><div class="tabs"><button id="adminTab" class="active" onclick="setMode('admin')">Admin Login</button><button id="agentTab" onclick="setMode('agent')">Agent Login</button></div><label id="idLabel">Admin ID</label><input id="loginId" placeholder="Admin ID"><label>Password</label><input id="loginPass" type="password" placeholder="Password"><button class="primary" onclick="login()">Login</button><div id="loginError" style="color:#c6283d;font-weight:700;margin-top:12px"></div></div></div>
+<div id="app" class="app"><header class="header"><h1>DIC (Digital Information Cell) — East Zone</h1><p>Central Case Information &amp; Investigation Management System</p><button class="logout" onclick="logout()">Logout</button><button class="menuBtn" onclick="toggleMenu()">☰</button></header>
+<div class="layout"><nav id="side" class="side"><div class="navitem activeNav" onclick="show('dashboard')">🏠 Main Dashboard</div><div class="section">CASE MANAGEMENT</div><div class="navitem" onclick="show('newcase')">➕ New Case Request</div><div class="navitem" onclick="show('cases')">📋 All Cases</div><div class="navitem" onclick="show('approvals')">✅ Approval Queue</div><div class="navitem" onclick="show('reports')">📨 Reports / Attachments</div><div class="section">CDR &amp; QUERY TOOLS</div><div class="navitem" onclick="show('query')">📞 CDR / IMEI / MSISDN</div><div class="section">DISTRICTS</div><div class="navitem" onclick="showDistrict('District East')">🏛️ District East</div><div class="navitem" onclick="showDistrict('District Malir')">🏛️ District Malir</div><div class="navitem" onclick="showDistrict('District Korangi')">🏛️ District Korangi</div><div id="adminNav"><div class="section">ADMINISTRATION</div></div></nav><main id="main" class="content"></main></div></div>
+<div id="cdrModal" class="cdrModal hidden" onclick="if(event.target===this)closeCdrBox()">
+<div class="cdrPanel">
+<h2>📨 Official CDR Request — Copy Box</h2>
+<div class="smallNote">Selected CDR requests are merged here so the complete text can be copied once and pasted into Gmail.</div>
+<label>Request Text</label>
+<textarea id="cdrText" spellcheck="false"></textarea>
+<div class="cdrTools">
+<button class="primary" style="width:auto;margin-top:0" onclick="copyCdrText()">📋 Copy All</button>
+<button class="secondary" onclick="clearCdrText()">Clear</button>
+<button class="secondary" onclick="closeCdrBox()">Close</button>
+</div>
+<div id="copyMsg" class="copyOk"></div>
+</div></div>
+<script>
+const stations={"District East":["Aziz Bhatti","Bahadurabad","Baloch Colony","Brigade","Ferozabad","Gulistan-e-Johar","Gulshan-e-Iqbal","Jamshed Quarters","Mehmoodabad","Mubina Town","New Town","PIB Colony","Sachal","Shahrah-e-Faisal","Sohrab Goth","Soldier Bazar","Tipu Sultan"],"District Malir":["Airport","Bin Qasim","Gadap City","Ibrahim Hyderi","Malir Cantt","Malir City","Memon Goth","Quaidabad","Shah Latif Town","Sharafi Goth","Steel Town","Sukhan"],"District Korangi":["AL Falah","Awami Colony","Khokhrapar","Korangi","Korangi Industrial Area","Landhi","Model Colony","Saudabad","Zaman Town","Shah Faisal Colony"]};
+const KEY="dic_workflow_v108";let mode="admin",currentUser=null;
+function seed(){let x=JSON.parse(localStorage.getItem(KEY)||"null");if(!Array.isArray(x)){x=[{id:"0001",type:"Mobile Snatching",district:"District Malir",ps:"Ibrahim Hyderi",date:"2026-08-30",imei:"123456789012345",msisdn:"789012345",complainant:"",masterNumbers:"",status:"Approved — Data Form Pending",createdBy:"Waseem-45",createdAt:new Date().toISOString(),target:{},attachments:[],history:[{at:new Date().toISOString(),by:"Waseem-45",action:"Case request submitted"},{at:new Date().toISOString(),by:"admin",action:"Approved — Data Form Pending"}]}];localStorage.setItem(KEY,JSON.stringify(x))}}
+seed();function data(){return JSON.parse(localStorage.getItem(KEY)||"[]")}function save(x){localStorage.setItem(KEY,JSON.stringify(x))}
+function setMode(m){mode=m;adminTab.classList.toggle("active",m==="admin");agentTab.classList.toggle("active",m==="agent");idLabel.textContent=m==="admin"?"Admin ID":"Agent ID";loginId.placeholder=idLabel.textContent;loginError.textContent=""}
+function login(){let id=loginId.value.trim(),p=loginPass.value;if(mode==="admin"){if((id==="admin"||id==="Admin")&&p==="admin123"){currentUser={role:"admin",id:"admin",name:"Admin"};openApp()}else loginError.textContent="Invalid Admin ID or password."}else if(id.toLowerCase()==="waseem-45"&&p==="waseem123"){currentUser={role:"agent",id:"Waseem-45",name:"Waseem"};openApp()}else loginError.textContent="Invalid Agent ID/password."}
+function openApp(){loginPage.style.display="none";app.style.display="block";show("dashboard")}function logout(){location.reload()}function toggleMenu(){side.style.display=side.style.display==="block"?"none":"block"}function hideMobile(){if(innerWidth<801)side.style.display="none"}
+function show(p){let m={dashboard:dashboard,newcase:newCase,cases:cases,approvals:approvals,reports:reports,query:query};main.innerHTML=m[p]?m[p]():"";hideMobile()}
+function badge(s){let c=s.includes("Pending")?"pending":s.includes("Rejected")?"rejected":"approved";return '<span class="badge '+c+'">'+s+"</span>"}
+function dashboard(){return '<div class="card"><h2> '+(currentUser.role==="admin"?"Admin":"Agent")+' Dashboard</h2><div class="notice">Agent request → Admin approval → Investigation data → Report/CDR/File to Agent.</div></div><div class="card"><h3>Latest Case</h3>'+caseRows(data().slice(-1))+'</div>'}
+function newCase(){if(currentUser.role!=="agent")return '<div class="card"><h2>New Case Request</h2><div class="notice">Only agents submit requests.</div></div>';return '<div class="card"><h2>➕ New Case Request</h2><div class="formgrid"><label>Case ID<input id="n_id" placeholder="e.g. 0002"></label><label>Case Type<select id="n_type"><option>Mobile Snatching</option><option>House Robbery</option><option>Murder</option><option>Fraud</option><option>Extortion</option></select></label><label>District<select id="n_d" onchange="fillPS()"><option value="">Select District</option>'+Object.keys(stations).map(x=>'<option>'+x+'</option>').join("")+'</select></label><label>Police Station<select id="n_ps"><option>Select Police Station</option></select></label><label>Incident Date<input id="n_date" type="date"></label><label>Complainant Name<input id="n_complainant" placeholder="Complainant name"></label><label>Master Numbers<input id="n_master" placeholder="Multiple numbers, comma separated"></label><label>IMEI<input id="n_imei"></label><label>MSISDN<input id="n_msisdn"></label><label class="full">Remarks<textarea id="n_note"></textarea></label></div><button class="primary" onclick="submitRequest()">Submit to Admin for Approval</button></div>'}
+function fillPS(){n_ps.innerHTML='<option>Select Police Station</option>'+(stations[n_d.value]||[]).map(x=>'<option>'+x+'</option>').join("")}
+function submitRequest(){let c=data(),id=n_id.value.trim();if(!id||c.some(x=>x.id===id))return alert("Enter a unique Case ID.");c.push({id,type:n_type.value,district:n_d.value,ps:n_ps.value,date:n_date.value,imei:n_imei.value,msisdn:n_msisdn.value,complainant:n_complainant.value,masterNumbers:n_master.value,status:"Pending Admin Approval",createdBy:currentUser.id,createdAt:new Date().toISOString(),target:{},attachments:[],history:[{at:new Date().toISOString(),by:currentUser.id,action:"Case request submitted"}]});save(c);alert("Request sent to Admin.");show("cases")}
+function caseRows(c){if(!c.length)return '<div class="empty">No cases found.</div>';return '<div class="tableWrap"><table class="table"><tr><th>Case ID</th><th>Type</th><th>Police Station</th><th>Complainant</th><th>Master Numbers</th><th>Status</th><th></th></tr>'+c.map(x=>'<tr><td><b>'+x.id+'</b></td><td>'+x.type+'</td><td>'+x.ps+'</td><td>'+(x.complainant||"—")+'</td><td>'+(x.masterNumbers||"—")+'</td><td>'+badge(x.status)+'</td><td><button class="secondary" onclick="openCase(\''+x.id+'\')">Open</button></td></tr>').join("")+'</table></div>'}
+function cases(){let c=data();if(currentUser.role==="agent")c=c.filter(x=>x.createdBy===currentUser.id);return '<div class="card"><h2>📋 Cases</h2>'+caseRows(c)+'</div>'}
+function approvals(){if(currentUser.role!=="admin")return '<div class="card"><h2>Approval Queue</h2><div class="notice">Admin only.</div></div>';let c=data().filter(x=>x.status==="Pending Admin Approval");return '<div class="card"><h2>✅ Approval Queue</h2>'+ (c.length?c.map(x=>'<div class="queue"><b>Case '+x.id+'</b><p>'+x.ps+' • '+(x.complainant||"No complainant")+'</p><button class="success btn" onclick="approve(\''+x.id+'\')">Approve &amp; Open Data Form</button></div>').join(""):'<div class="empty">No pending approvals.</div>')+'</div>'}
+function approve(id){let c=data(),x=c.find(a=>a.id===id);x.status="Approved — Data Form Pending";x.history.push({at:new Date().toISOString(),by:"admin",action:"Approved — Data Form Pending"});save(c);show("approvals")}
+function cdrButton(kind,val){
+return '<button class="cdrBtn" onclick="cdrQuery(\''+kind+'\',\''+String(val||"").replace(/'/g,"\\\\'")+'\')">CDRs by '+(kind==="imei"?"IMEI":"MSISDN")+'</button>'
+}
+function fmtDMY(v,sep){
+if(!v)return "";
+let a=v.split("-");
+return a[2]+sep+a[1]+sep+a[0];
+}
+function detectNetworkMsisdn(v){
+let n=String(v||"").replace(/\D/g,"");
+if(n.startsWith("92"))n=n.slice(2);
+if(n.startsWith("0"))n=n.slice(1);
+let p=parseInt(n.slice(0,3),10);
+if(p>=300&&p<=309||p>=320&&p<=329)return "Mobilink/Warid";
+if(p>=340&&p<=349)return "Telenor";
+if(p>=310&&p<=319||p>=370&&p<=379)return "Zong";
+return "Unknown";
+}
+function normalize92(v){
+let n=String(v||"").replace(/\D/g,"");
+if(n.startsWith("92"))return n;
+if(n.startsWith("0"))return "92"+n.slice(1);
+if(n.length===10)return "92"+n;
+return n;
+}
+function buildCdr(kind,val,from,to){
+if(!val)return "";
+let f=from||"2026-06-01",t=to||new Date().toISOString().slice(0,10);
+let fs=fmtDMY(f,"/"),ts=fmtDMY(t,"/"),fd=fmtDMY(f,"-"),td=fmtDMY(t,"-");
+if(kind==="imei"){
+let raw=String(val).replace(/\D/g,"");
+if(raw.length>=15)return "ZONG\nPERIOD FROM "+fs+" TO DATE ("+ts+").\n"+raw.slice(0,15);
+let i14=raw.slice(0,14);
+return "MOBILINK/WARID\nI;"+i14+";"+fs+";"+ts+";\n\nTELENOR\nTPI:"+i14+":"+fd+":"+td+":";
+}
+let net=detectNetworkMsisdn(val),n=normalize92(val);
+if(net==="Mobilink/Warid")return "MOBILINK/WARID\nA;"+n+";"+fs+";"+ts+";";
+if(net==="Telenor")return "TELENOR\nTPN:"+n+":"+fd+":"+td+":";
+if(net==="Zong")return "ZONG\nPeriod From "+fs+" To Date ("+ts+").\n"+String(val).replace(/\D/g,"")+", (With Sms Record)";
+return "UNKNOWN NETWORK\n"+val;
+}
+function cdrQuery(kind,val){
+if(!val)return alert("Number/IMEI is empty.");
+let cdr=buildCdr(kind,val),el=document.getElementById("cdrText"),old=el.value.trim();
+el.value=old?old+"\n\n"+cdr:cdr;
+document.getElementById("cdrModal").classList.remove("hidden");
+document.getElementById("copyMsg").textContent="";
+}
+async function copyCdrText(){
+let el=document.getElementById("cdrText"),text=el.value;
+if(!text.trim())return alert("CDR request box is empty.");
+try{await navigator.clipboard.writeText(text);}catch(e){el.select();document.execCommand("copy");}
+document.getElementById("copyMsg").textContent="✓ Copied — Gmail mein paste kar sakte hain.";
+}
+function clearCdrText(){document.getElementById("cdrText").value="";document.getElementById("copyMsg").textContent="";}
+function closeCdrBox(){document.getElementById("cdrModal").classList.add("hidden");}
+function openCase(id){let x=data().find(a=>a.id===id),t=x.target||{};let admin=currentUser.role==="admin";main.innerHTML='<div class="card"><h2>📁 Case '+x.id+'</h2><div class="notice">'+badge(x.status)+' &nbsp; Requested by <b>'+x.createdBy+'</b></div><div class="formgrid"><div><b>Police Station</b><p>'+x.district+' — '+x.ps+'</p></div><div><b>Complainant Name</b><p>'+ (x.complainant||"—") +'</p></div><div><b>Master Numbers</b><p>'+ (x.masterNumbers||"—") +'</p></div><div><b>Incident Date</b><p>'+x.date+'</p></div><div><b>IMEI</b><div class="inlineField"><input value="'+x.imei+'" readonly>'+cdrButton("imei",x.imei)+'</div></div><div><b>MSISDN</b><div class="inlineField"><input value="'+x.msisdn+'" readonly>'+cdrButton("msisdn",x.msisdn)+'</div></div></div>'+((admin&&(x.status==="Approved — Data Form Pending"||x.status==="Investigation Data Saved"))?investigation(x):"")+'<h3>Workflow History</h3>'+x.history.map(h=>'<div class="attachment"><b>'+h.action+'</b><br><small>'+h.by+' • '+new Date(h.at).toLocaleString()+'</small></div>').join("")+'<div class="actions"><button class="secondary" onclick="show(\'cases\')">← Back</button></div></div>'}
+function investigation(x){let t=x.target||{};return '<hr><h3>🔎 Post-Approval Investigation Data</h3><div class="formgrid"><label>Target SIM Number<div class="inlineField"><input id="t_sim" value="'+(t.sim||x.msisdn||"")+'">'+cdrButton("msisdn",t.sim||x.msisdn)+'</div></label><label>SIM Used in IMEI<div class="inlineField"><input id="t_imei" value="'+(t.imei||x.imei||"")+'">'+cdrButton("imei",t.imei||x.imei)+'</div></label><label>Duration / From Date<input id="t_from" type="date" value="'+(t.from||"")+'"></label><label>Duration / To Date<input id="t_to" type="date" value="'+(t.to||"")+'"></label><label>Target Name<input id="t_name" value="'+(t.name||"")+'"></label><label>Target CNIC<input id="t_cnic" value="'+(t.cnic||"")+'"></label><label>Target Location<input id="t_loc" value="'+(t.location||"")+'"></label><label>Status<select id="t_status"><option>Traced</option><option>Untraced</option><option>Under Investigation</option><option>Recovered</option><option>Closed</option></select></label><label class="full">Admin Investigation Remarks<textarea id="t_rem">'+(t.remarks||"")+'</textarea></label></div><div class="actions"><button class="success btn" onclick="saveInvestigation(\''+x.id+'\')">Save Investigation Data</button></div>'}
+function saveInvestigation(id){let c=data(),x=c.find(a=>a.id===id);x.target={sim:t_sim.value,imei:t_imei.value,from:t_from.value,to:t_to.value,name:t_name.value,cnic:t_cnic.value,location:t_loc.value,status:t_status.value,remarks:t_rem.value};x.status="Investigation Data Saved";x.history.push({at:new Date().toISOString(),by:"admin",action:"Post-approval investigation data saved"});save(c);openCase(id)}
+function reports(){return '<div class="card"><h2>📨 Reports / Attachments</h2><div class="notice">Attachment workflow remains optional as before.</div></div>'}
+function query(){return '<div class="card"><h2>📞 CDR / IMEI / MSISDN</h2><div class="notice">Use the case-level CDR buttons. All selected requests can be merged into one copyable box for Gmail.</div><button class="primary" onclick="document.getElementById('cdrModal').classList.remove('hidden')">📨 Open Official CDR Copy Box</button></div>'}
+function showDistrict(d){let c=data().filter(x=>x.district===d);main.innerHTML='<div class="card"><h2>🏛️ '+d+'</h2>'+stations[d].map(ps=>'<div class="queue"><b>'+ps+'</b><br><small>'+c.filter(x=>x.ps===ps).length+' case(s)</small></div>').join("")+'</div>';hideMobile()}
+</script></body></html>
