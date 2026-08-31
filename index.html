@@ -59,23 +59,27 @@ function caseRows(c){if(!c.length)return '<div class="empty">No cases found.</di
 function cases(){let c=visibleCases();return '<div class="card"><h2>📋 Cases</h2>'+(currentUser.role==="agent"?' <div class="notice">Only records for <b>'+currentUser.station+'</b> are shown.</div>':"")+caseRows(c)+'</div>'}
 function approvals(){if(currentUser.role!=="admin")return '<div class="card"><h2>Approval Queue</h2><div class="notice">Admin only.</div></div>';let c=data().filter(x=>x.status==="Pending Admin Approval");return '<div class="card"><h2>✅ Approval Queue</h2>'+ (c.length?c.map(x=>'<div class="queue"><b>Case '+x.id+'</b><p>'+x.ps+' • '+(x.complainant||"No complainant")+'</p><button class="success btn" onclick="approve(\''+x.id+'\')">Approve &amp; Open Data Form</button></div>').join(""):'<div class="empty">No pending approvals.</div>')+'</div>'}
 function approve(id){let c=data(),x=c.find(a=>a.id===id);x.status="Approved — Data Form Pending";x.history.push({at:new Date().toISOString(),by:"admin",action:"Approved — Data Form Pending"});save(c);show("approvals")}
-function cdrButton(kind,val){
+function cdrButton(kind,val,from,to){
 const safe=String(val||"");
-return `<button class="cdrBtn" onclick='cdrQuery(${JSON.stringify(kind)},${JSON.stringify(safe)})'>CDRs by ${kind==="imei"?"IMEI":"MSISDN"}</button>`;
+return `<button class="cdrBtn" onclick='cdrQuery(${JSON.stringify(kind)},${JSON.stringify(safe)},${JSON.stringify(from||"")},${JSON.stringify(to||"")})'>CDRs by ${kind==="imei"?"IMEI":"MSISDN"}</button>`;
 }
 function fmtDMY(v,sep){
 if(!v)return "";
 let a=v.split("-");
 return a[2]+sep+a[1]+sep+a[0];
 }
+function splitCdrValues(v){
+return String(v||"").split(/[\\,;\\n\\t ]+/).map(x=>x.trim()).filter(Boolean);
+}
 function detectNetworkMsisdn(v){
 let n=String(v||"").replace(/\D/g,"");
 if(n.startsWith("92"))n=n.slice(2);
 if(n.startsWith("0"))n=n.slice(1);
 let p=parseInt(n.slice(0,3),10);
-if(p>=300&&p<=309||p>=320&&p<=329)return "Mobilink/Warid";
+if((p>=300&&p<=309)||(p>=320&&p<=329))return "Mobilink/Warid";
 if(p>=340&&p<=349)return "Telenor";
-if(p>=310&&p<=319||p>=370&&p<=379)return "Zong";
+if((p>=310&&p<=319)||(p>=370&&p<=379))return "Zong";
+if(p>=330&&p<=339)return "Ufone";
 return "Unknown";
 }
 function normalize92(v){
@@ -85,25 +89,42 @@ if(n.startsWith("0"))return "92"+n.slice(1);
 if(n.length===10)return "92"+n;
 return n;
 }
-function buildCdr(kind,val,from,to){
-if(!val)return "";
+function buildImeiCdr(imei,from,to){
+let raw=String(imei||"").replace(/\D/g,"");
+if(!raw)return "";
 let f=from||"2026-06-01",t=to||new Date().toISOString().slice(0,10);
 let fs=fmtDMY(f,"/"),ts=fmtDMY(t,"/"),fd=fmtDMY(f,"-"),td=fmtDMY(t,"-");
-if(kind==="imei"){
-let raw=String(val).replace(/\D/g,"");
-if(raw.length>=15)return "ZONG\nPERIOD FROM "+fs+" TO DATE ("+ts+").\n"+raw.slice(0,15);
-let i14=raw.slice(0,14);
-return "MOBILINK/WARID\nI;"+i14+";"+fs+";"+ts+";\n\nTELENOR\nTPI:"+i14+":"+fd+":"+td+":";
+let i15=raw.slice(0,15),i14=raw.slice(0,14);
+return [
+"ZONG\nPERIOD FROM "+fs+" TO DATE ("+ts+").\n"+i15,
+"MOBILINK/WARID\nI;"+i14+";"+fs+";"+ts+";",
+"TELENOR\nTPI:"+i14+":"+fd+":"+td+":",
+"UFONE\n"+i15+"\nPERIOD FROM "+fs+" TO DATE ("+ts+")."
+].join("\n\n");
 }
-let net=detectNetworkMsisdn(val),n=normalize92(val);
+function buildMsisdnCdr(number,from,to){
+let raw=String(number||"").replace(/\D/g,"");
+if(!raw)return "";
+let f=from||"2026-06-01",t=to||new Date().toISOString().slice(0,10);
+let fs=fmtDMY(f,"/"),ts=fmtDMY(t,"/"),fd=fmtDMY(f,"-"),td=fmtDMY(t,"-");
+let net=detectNetworkMsisdn(raw),n=normalize92(raw);
 if(net==="Mobilink/Warid")return "MOBILINK/WARID\nA;"+n+";"+fs+";"+ts+";";
 if(net==="Telenor")return "TELENOR\nTPN:"+n+":"+fd+":"+td+":";
-if(net==="Zong")return "ZONG\nPeriod From "+fs+" To Date ("+ts+").\n"+String(val).replace(/\D/g,"")+", (With Sms Record)";
-return "UNKNOWN NETWORK\n"+val;
+if(net==="Zong")return "ZONG\nPeriod From "+fs+" To Date ("+ts+").\n"+raw+", (With Sms Record)";
+if(net==="Ufone")return "UFONE\n"+n+"\nPERIOD FROM "+fs+" TO DATE ("+ts+").";
+return "UNKNOWN NETWORK\n"+raw;
 }
-function cdrQuery(kind,val){
-if(!val)return alert("Number/IMEI is empty.");
-let cdr=buildCdr(kind,val),el=document.getElementById("cdrText"),old=el.value.trim();
+function buildCdr(kind,val,from,to){
+let values=splitCdrValues(val);
+if(!values.length)return "";
+if(kind==="imei")return values.map(v=>buildImeiCdr(v,from,to)).join("\n\n==============================\n\n");
+return values.map(v=>buildMsisdnCdr(v,from,to)).join("\n\n==============================\n\n");
+}
+function cdrQuery(kind,val,from,to){
+if(!val)return alert(kind==="imei"?"IMEI is empty.":"MSISDN is empty.");
+let f=from||document.getElementById("t_from")?.value||"";
+let t=to||document.getElementById("t_to")?.value||"";
+let cdr=buildCdr(kind,val,f,t),el=document.getElementById("cdrText"),old=el.value.trim();
 el.value=old?old+"\n\n"+cdr:cdr;
 document.getElementById("cdrModal").classList.remove("hidden");
 document.getElementById("copyMsg").textContent="";
@@ -116,7 +137,7 @@ document.getElementById("copyMsg").textContent="✓ Copied — Gmail mein paste 
 }
 function clearCdrText(){document.getElementById("cdrText").value="";document.getElementById("copyMsg").textContent="";}
 function closeCdrBox(){document.getElementById("cdrModal").classList.add("hidden");}
-function openCase(id){let x=data().find(a=>a.id===id);if(!x)return;if(currentUser.role==="agent"&&x.ps!==currentUser.station){alert("Access denied: this case belongs to another police station.");return show("cases")}let admin=currentUser.role==="admin";let cdrI=admin?cdrButton("imei",x.imei):"";let cdrM=admin?cdrButton("msisdn",x.msisdn):"";$("main").innerHTML=`<div class="card"><h2>📁 Case ${x.id}</h2><div class="notice">${badge(x.status)} &nbsp; Requested by <b>${x.createdBy}</b></div><div class="formgrid"><div><b>Police Station</b><p>${x.district} — ${x.ps}</p></div><div><b>Complainant Name</b><p>${x.complainant||"—"}</p></div><div><b>Master Numbers</b><p>${x.masterNumbers||"—"}</p></div><div><b>Incident Date</b><p>${x.date}</p></div><div><b>IMEI</b><div class="inlineField"><input value="${x.imei||""}" readonly>${cdrI}</div></div><div><b>MSISDN</b><div class="inlineField"><input value="${x.msisdn||""}" readonly>${cdrM}</div></div></div>${(admin&&(x.status==="Approved — Data Form Pending"||x.status==="Investigation Data Saved"))?investigation(x):""}<h3>Workflow History</h3>${x.history.map(h=>`<div class="attachment"><b>${h.action}</b><br><small>${h.by} • ${new Date(h.at).toLocaleString()}</small></div>`).join("")}<div class="actions"><button class="secondary" onclick="show('cases')">← Back</button></div></div>`;if(admin&&(x.status==="Approved — Data Form Pending"||x.status==="Investigation Data Saved"))renderTargetUsers()}
+function openCase(id){let x=data().find(a=>a.id===id);if(!x)return;if(currentUser.role==="agent"&&x.ps!==currentUser.station){alert("Access denied: this case belongs to another police station.");return show("cases")}let admin=currentUser.role==="admin";let cdrI=admin?cdrButton("imei",x.imei):"";let cdrM=admin?cdrButton("msisdn",x.msisdn):"";let masterButtons=admin?splitCdrValues(x.masterNumbers||"").map(n=>cdrButton("msisdn",n)).join(" "):"";$("main").innerHTML=`<div class="card"><h2>📁 Case ${x.id}</h2><div class="notice">${badge(x.status)} &nbsp; Requested by <b>${x.createdBy}</b></div><div class="formgrid"><div><b>Police Station</b><p>${x.district} — ${x.ps}</p></div><div><b>Complainant Name</b><p>${x.complainant||"—"}</p></div><div><b>Master Numbers</b><p>${x.masterNumbers||"—"}</p>${masterButtons?'<div style="margin-top:6px">'+masterButtons+'</div>':""}</div><div><b>Incident Date</b><p>${x.date}</p></div><div><b>IMEI</b><div class="inlineField"><input value="${x.imei||""}" readonly>${cdrI}</div></div><div><b>MSISDN</b><div class="inlineField"><input value="${x.msisdn||""}" readonly>${cdrM}</div></div></div>${(admin&&(x.status==="Approved — Data Form Pending"||x.status==="Investigation Data Saved"))?investigation(x):""}<h3>Workflow History</h3>${x.history.map(h=>`<div class="attachment"><b>${h.action}</b><br><small>${h.by} • ${new Date(h.at).toLocaleString()}</small></div>`).join("")}<div class="actions"><button class="secondary" onclick="show('cases')">← Back</button></div></div>`;if(admin&&(x.status==="Approved — Data Form Pending"||x.status==="Investigation Data Saved"))renderTargetUsers()}
 function normalizeTargetUsers(x){
 let t=Array.isArray(x.targetUsers)?x.targetUsers:[];
 if(!t.length){
@@ -131,7 +152,7 @@ return t.slice(0,10);
 }
 let targetDraft=[],targetCaseId="";
 function targetUserCard(u,i){
-return '<div class="targetUserCard"><div class="targetUserHead"><h4>👤 Target SIM User #'+(i+1)+'</h4>'+(i>0?'<button class="removeTarget" type="button" onclick="removeTargetUser('+i+')">✕ Remove</button>':"")+'</div><div class="formgrid"><label>Target SIM Number<div class="inlineField"><input id="tu_sim_'+i+'" value="'+(u.sim||"")+'" placeholder="03XXXXXXXXX">'+cdrButton("msisdn",u.sim||"")+'</div></label><label>SIM Owner Name<input id="tu_owner_'+i+'" value="'+(u.owner||"")+'" placeholder="Current SIM owner"></label><label>Owner CNIC<input id="tu_cnic_'+i+'" value="'+(u.cnic||"")+'" placeholder="CNIC"></label><label>Target Location<input id="tu_loc_'+i+'" value="'+(u.location||"")+'" placeholder="Location / address"></label><label>SIM Use From Date<input id="tu_from_'+i+'" type="date" value="'+(u.from||"")+'"></label><label>SIM Use To Date<input id="tu_to_'+i+'" type="date" value="'+(u.to||"")+'"></label><label>Status<select id="tu_status_'+i+'"><option '+((u.status||"Under Investigation")==="Under Investigation"?"selected":"")+'>Under Investigation</option><option '+(u.status==="Traced"?"selected":"")+'>Traced</option><option '+(u.status==="Untraced"?"selected":"")+'>Untraced</option><option '+(u.status==="Recovered"?"selected":"")+'>Recovered</option><option '+(u.status==="Closed"?"selected":"")+'>Closed</option></select></label><label>Remarks<input id="tu_rem_'+i+'" value="'+(u.remarks||"")+'" placeholder="User-specific remarks"></label></div></div>';
+return '<div class="targetUserCard"><div class="targetUserHead"><h4>👤 Target SIM User #'+(i+1)+'</h4>'+(i>0?'<button class="removeTarget" type="button" onclick="removeTargetUser('+i+')">✕ Remove</button>':"")+'</div><div class="formgrid"><label>Target SIM Number<div class="inlineField"><input id="tu_sim_'+i+'" value="'+(u.sim||"")+'" placeholder="03XXXXXXXXX">'+cdrButton("msisdn",u.sim||"",u.from||"",u.to||"")+'</div></label><label>SIM Owner Name<input id="tu_owner_'+i+'" value="'+(u.owner||"")+'" placeholder="Current SIM owner"></label><label>Owner CNIC<input id="tu_cnic_'+i+'" value="'+(u.cnic||"")+'" placeholder="CNIC"></label><label>Target Location<input id="tu_loc_'+i+'" value="'+(u.location||"")+'" placeholder="Location / address"></label><label>SIM Use From Date<input id="tu_from_'+i+'" type="date" value="'+(u.from||"")+'"></label><label>SIM Use To Date<input id="tu_to_'+i+'" type="date" value="'+(u.to||"")+'"></label><label>Status<select id="tu_status_'+i+'"><option '+((u.status||"Under Investigation")==="Under Investigation"?"selected":"")+'>Under Investigation</option><option '+(u.status==="Traced"?"selected":"")+'>Traced</option><option '+(u.status==="Untraced"?"selected":"")+'>Untraced</option><option '+(u.status==="Recovered"?"selected":"")+'>Recovered</option><option '+(u.status==="Closed"?"selected":"")+'>Closed</option></select></label><label>Remarks<input id="tu_rem_'+i+'" value="'+(u.remarks||"")+'" placeholder="User-specific remarks"></label></div></div>';
 }
 function readTargetUsersFromForm(){
 let out=[];
