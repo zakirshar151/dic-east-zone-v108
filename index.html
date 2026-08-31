@@ -110,7 +110,7 @@ function splitCdrValues(v){
 return String(v||"").split(/[\\,;\\n\\t ]+/).map(x=>x.trim()).filter(Boolean);
 }
 function detectNetworkMsisdn(v){
-let n=String(v||"").replace(/\D/g,"");
+let n=String(v||"").replace(/\\D/g,"");
 if(n.startsWith("92"))n=n.slice(2);
 if(n.startsWith("0"))n=n.slice(1);
 let p=parseInt(n.slice(0,3),10);
@@ -121,18 +121,19 @@ if(p>=330&&p<=339)return "Ufone";
 return "Unknown";
 }
 function normalize92(v){
-let n=String(v||"").replace(/\D/g,"");
+let n=String(v||"").replace(/\\D/g,"");
 if(n.startsWith("92"))return n;
 if(n.startsWith("0"))return "92"+n.slice(1);
 if(n.length===10)return "92"+n;
 return n;
 }
 function buildImeiCdr(imei,from,to){
-let raw=String(imei||"").replace(/\D/g,"");
+let raw=String(imei||"").replace(/\\D/g,"");
 if(!raw)return "";
+if(raw.length!==15)return "INVALID IMEI — 15 digits required: "+raw;
 let f=from||"2026-06-01",t=to||new Date().toISOString().slice(0,10);
 let fs=fmtDMY(f,"/"),ts=fmtDMY(t,"/"),fd=fmtDMY(f,"-"),td=fmtDMY(t,"-");
-let i15=raw.slice(0,15),i14=raw.slice(0,14);
+let i15=raw,i14=raw.slice(0,14);
 return [
 "ZONG\nPERIOD FROM "+fs+" TO DATE ("+ts+").\n"+i15,
 "MOBILINK/WARID\nI;"+i14+";"+fs+";"+ts+";",
@@ -141,22 +142,24 @@ return [
 ].join("\n\n");
 }
 function buildMsisdnCdr(number,from,to){
-let raw=String(number||"").replace(/\D/g,"");
+let raw=String(number||"").replace(/\\D/g,"");
 if(!raw)return "";
 let f=from||"2026-06-01",t=to||new Date().toISOString().slice(0,10);
 let fs=fmtDMY(f,"/"),ts=fmtDMY(t,"/"),fd=fmtDMY(f,"-"),td=fmtDMY(t,"-");
 let net=detectNetworkMsisdn(raw),n=normalize92(raw);
 if(net==="Mobilink/Warid")return "MOBILINK/WARID\nA;"+n+";"+fs+";"+ts+";";
 if(net==="Telenor")return "TELENOR\nTPN:"+n+":"+fd+":"+td+":";
-if(net==="Zong")return "ZONG\nPeriod From "+fs+" To Date ("+ts+").\n"+raw+", (With Sms Record)";
+if(net==="Zong")return "ZONG\nPERIOD FROM "+fs+" TO DATE ("+ts+").\n"+raw+", (WITH SMS RECORD)";
 if(net==="Ufone")return "UFONE\n"+n+"\nPERIOD FROM "+fs+" TO DATE ("+ts+").";
 return "UNKNOWN NETWORK\n"+raw;
 }
 function buildCdr(kind,val,from,to){
 let values=splitCdrValues(val);
 if(!values.length)return "";
-if(kind==="imei")return values.map(v=>buildImeiCdr(v,from,to)).join("\n\n==============================\n\n");
-return values.map(v=>buildMsisdnCdr(v,from,to)).join("\n\n==============================\n\n");
+if(kind==="imei"){
+return values.map((v,i)=>"IMEI REQUEST #"+(i+1)+"\n"+buildImeiCdr(v,from,to)).join("\n\n==============================\n\n");
+}
+return values.map((v,i)=>"MSISDN REQUEST #"+(i+1)+" — "+detectNetworkMsisdn(v)+"\n"+buildMsisdnCdr(v,from,to)).join("\n\n==============================\n\n");
 }
 function bulkCdrQuery(kind){const val=$(kind==="imei"?"bulkImei":"bulkMsisdn")?.value||"";const from=$("bulkFrom")?.value||"";const to=$("bulkTo")?.value||"";if(!splitCdrValues(val).length)return alert(kind==="imei"?"کم از کم ایک IMEI درج کریں۔":"کم از کم ایک MSISDN درج کریں۔");cdrQuery(kind,val,from,to)}
 function cdrQuery(kind,val,from,to){
