@@ -8,6 +8,13 @@
 .cdrPanel h2{margin:0 0 8px}.cdrPanel textarea{min-height:300px;font-family:monospace;line-height:1.5}
 .cdrTools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.smallNote{font-size:13px;color:#68788d}
 .copyOk{color:#159447;font-weight:700;min-height:20px}
+.targetUserCard{border:1px solid #d5dee7;border-radius:14px;padding:16px;margin:12px 0;background:#fbfdff}
+.targetUserHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.targetUserHead h4{margin:0;color:#173555;font-size:17px}
+.removeTarget{border:0;border-radius:8px;padding:8px 11px;background:#ffe0e5;color:#9b1e31;font-weight:700;cursor:pointer}
+.addTarget{margin-top:8px}
+.targetHint{background:#eef7ff;border-left:4px solid #1769e8;padding:11px;border-radius:8px;margin:10px 0;color:#173555}
+
 @media(max-width:800px){.layout{display:block}.side{display:none;position:absolute;left:0;right:0;z-index:30}.menuBtn{display:block}.header h1{font-size:28px;margin-right:105px}.content{padding:18px 14px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.login{padding:32px 25px}.card{padding:19px}}
 </style></head><body>
 <div id="loginPage" class="loginWrap"><div class="login"><div style="font-size:44px">🪪</div><h1>DIC East Zone</h1><div class="sub">Authorized Access</div><div class="tabs"><button id="adminTab" class="active" onclick="setMode('admin')">Admin Login</button><button id="agentTab" onclick="setMode('agent')">Agent Login</button></div><label id="idLabel">Admin ID</label><input id="loginId" placeholder="Admin ID"><label>Password</label><div class="passwordWrap"><input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"><button id="togglePass" class="eyeBtn" type="button" aria-label="Show password" title="Show password">👁️</button></div><button id="loginBtn" class="primary" type="button">Login</button><div id="loginError" style="color:#c6283d;font-weight:700;margin-top:12px"></div></div></div>
@@ -102,8 +109,68 @@ document.getElementById("copyMsg").textContent="✓ Copied — Gmail mein paste 
 function clearCdrText(){document.getElementById("cdrText").value="";document.getElementById("copyMsg").textContent="";}
 function closeCdrBox(){document.getElementById("cdrModal").classList.add("hidden");}
 function openCase(id){let x=data().find(a=>a.id===id),t=x.target||{};let admin=currentUser.role==="admin";$("main").innerHTML='<div class="card"><h2>📁 Case '+x.id+'</h2><div class="notice">'+badge(x.status)+' &nbsp; Requested by <b>'+x.createdBy+'</b></div><div class="formgrid"><div><b>Police Station</b><p>'+x.district+' — '+x.ps+'</p></div><div><b>Complainant Name</b><p>'+ (x.complainant||"—") +'</p></div><div><b>Master Numbers</b><p>'+ (x.masterNumbers||"—") +'</p></div><div><b>Incident Date</b><p>'+x.date+'</p></div><div><b>IMEI</b><div class="inlineField"><input value="'+x.imei+'" readonly>'+cdrButton("imei",x.imei)+'</div></div><div><b>MSISDN</b><div class="inlineField"><input value="'+x.msisdn+'" readonly>'+cdrButton("msisdn",x.msisdn)+'</div></div></div>'+((admin&&(x.status==="Approved — Data Form Pending"||x.status==="Investigation Data Saved"))?investigation(x):"")+'<h3>Workflow History</h3>'+x.history.map(h=>'<div class="attachment"><b>'+h.action+'</b><br><small>'+h.by+' • '+new Date(h.at).toLocaleString()+'</small></div>').join("")+'<div class="actions"><button class="secondary" onclick="show(\'cases\')">← Back</button></div></div>'}
-function investigation(x){let t=x.target||{};return '<hr><h3>🔎 Post-Approval Investigation Data</h3><div class="formgrid"><label>Target SIM Number<div class="inlineField"><input id="t_sim" value="'+(t.sim||x.msisdn||"")+'">'+cdrButton("msisdn",t.sim||x.msisdn)+'</div></label><label>SIM Used in IMEI<div class="inlineField"><input id="t_imei" value="'+(t.imei||x.imei||"")+'">'+cdrButton("imei",t.imei||x.imei)+'</div></label><label>Duration / From Date<input id="t_from" type="date" value="'+(t.from||"")+'"></label><label>Duration / To Date<input id="t_to" type="date" value="'+(t.to||"")+'"></label><label>Target Name<input id="t_name" value="'+(t.name||"")+'"></label><label>Target CNIC<input id="t_cnic" value="'+(t.cnic||"")+'"></label><label>Target Location<input id="t_loc" value="'+(t.location||"")+'"></label><label>Status<select id="t_status"><option>Traced</option><option>Untraced</option><option>Under Investigation</option><option>Recovered</option><option>Closed</option></select></label><label class="full">Admin Investigation Remarks<textarea id="t_rem">'+(t.remarks||"")+'</textarea></label></div><div class="actions"><button class="success btn" onclick="saveInvestigation(\''+x.id+'\')">Save Investigation Data</button></div>'}
-function saveInvestigation(id){let c=data(),x=c.find(a=>a.id===id);x.target={sim:$("t_sim").value,imei:$("t_imei").value,from:$("t_from").value,to:$("t_to").value,name:$("t_name").value,cnic:$("t_cnic").value,location:$("t_loc").value,status:$("t_status").value,remarks:$("t_rem").value};x.status="Investigation Data Saved";x.history.push({at:new Date().toISOString(),by:"admin",action:"Post-approval investigation data saved"});save(c);openCase(id)}
+function normalizeTargetUsers(x){
+let t=Array.isArray(x.targetUsers)?x.targetUsers:[];
+if(!t.length){
+let old=x.target||{};
+if(old.sim||old.name||old.cnic||old.location||old.from||old.to||old.status||old.remarks){
+t=[{sim:old.sim||x.msisdn||"",owner:old.name||"",cnic:old.cnic||"",location:old.location||"",from:old.from||"",to:old.to||"",status:old.status||"Under Investigation",remarks:old.remarks||""}];
+}else{
+t=[{sim:"",owner:"",cnic:"",location:"",from:"",to:"",status:"Under Investigation",remarks:""}];
+}
+}
+return t.slice(0,10);
+}
+let targetDraft=[],targetCaseId="";
+function targetUserCard(u,i){
+return '<div class="targetUserCard"><div class="targetUserHead"><h4>👤 Target SIM User #'+(i+1)+'</h4>'+(i>0?'<button class="removeTarget" type="button" onclick="removeTargetUser('+i+')">✕ Remove</button>':"")+'</div><div class="formgrid"><label>Target SIM Number<div class="inlineField"><input id="tu_sim_'+i+'" value="'+(u.sim||"")+'" placeholder="03XXXXXXXXX">'+cdrButton("msisdn",u.sim||"")+'</div></label><label>SIM Owner Name<input id="tu_owner_'+i+'" value="'+(u.owner||"")+'" placeholder="Current SIM owner"></label><label>Owner CNIC<input id="tu_cnic_'+i+'" value="'+(u.cnic||"")+'" placeholder="CNIC"></label><label>Target Location<input id="tu_loc_'+i+'" value="'+(u.location||"")+'" placeholder="Location / address"></label><label>SIM Use From Date<input id="tu_from_'+i+'" type="date" value="'+(u.from||"")+'"></label><label>SIM Use To Date<input id="tu_to_'+i+'" type="date" value="'+(u.to||"")+'"></label><label>Status<select id="tu_status_'+i+'"><option>Under Investigation</option><option>Traced</option><option>Untraced</option><option>Recovered</option><option>Closed</option></select></label><label>Remarks<input id="tu_rem_'+i+'" value="'+(u.remarks||"")+'" placeholder="User-specific remarks"></label></div></div>';
+}
+function readTargetUsersFromForm(){
+let out=[];
+for(let i=0;i<targetDraft.length;i++){
+let sim=$("tu_sim_"+i);
+if(!sim)continue;
+out.push({sim:sim.value.trim(),owner:$("tu_owner_"+i).value.trim(),cnic:$("tu_cnic_"+i).value.trim(),location:$("tu_loc_"+i).value.trim(),from:$("tu_from_"+i).value,to:$("tu_to_"+i).value,status:$("tu_status_"+i).value,remarks:$("tu_rem_"+i).value.trim()});
+}
+return out;
+}
+function renderTargetUsers(){
+let wrap=$("targetUsersWrap");
+if(wrap)wrap.innerHTML=targetDraft.map((u,i)=>targetUserCard(u,i)).join("");
+let count=$("targetCount");
+if(count)count.textContent=targetDraft.length+" / 10 users";
+let add=$("addTargetBtn");
+if(add)add.disabled=targetDraft.length>=10;
+}
+function addTargetUser(){
+targetDraft=readTargetUsersFromForm();
+if(targetDraft.length>=10)return alert("Maximum 10 Target SIM users can be added to this IMEI.");
+targetDraft.push({sim:"",owner:"",cnic:"",location:"",from:"",to:"",status:"Under Investigation",remarks:""});
+renderTargetUsers();
+let el=$("tu_sim_"+(targetDraft.length-1));if(el)el.focus();
+}
+function removeTargetUser(i){
+targetDraft=readTargetUsersFromForm();
+if(targetDraft.length<=1)return alert("At least one Target SIM User form is required.");
+targetDraft.splice(i,1);
+renderTargetUsers();
+}
+function investigation(x){
+targetCaseId=x.id;
+targetDraft=normalizeTargetUsers(x);
+return '<hr><h3>🔎 Post-Approval Investigation Data</h3><div class="targetHint"><b>Base / Snatched IMEI:</b> This is the IMEI of the snatched handset. Every Target SIM User below represents a SIM that was subsequently used in this same IMEI. One IMEI can have multiple users; owner, CNIC and location can change for every SIM/user.</div><div class="formgrid"><label>Snatched IMEI (Base IMEI)<div class="inlineField"><input value="'+(x.imei||"")+'" readonly>'+cdrButton("imei",x.imei)+'</div></label><label>Total Target SIM Users<div class="inlineField"><input id="targetCount" value="'+targetDraft.length+' / 10 users" readonly><button class="secondary" type="button" onclick="addTargetUser()">➕ Add</button></div></label></div><div id="targetUsersWrap"></div><div class="actions"><button id="addTargetBtn" class="secondary addTarget" type="button" onclick="addTargetUser()">➕ Add Another Target SIM User</button><button class="success btn" onclick="saveInvestigation(\''+x.id+'\')">Save Investigation Data</button></div><div class="smallNote">You can add 1 to 10 Target SIM users under the same snatched IMEI. Each user has separate owner, CNIC, location, dates, status and remarks.</div><script>setTimeout(renderTargetUsers,0)<\/script>';
+}
+function saveInvestigation(id){
+let c=data(),x=c.find(a=>a.id===id);
+if(!x)return;
+let users=readTargetUsersFromForm();
+if(!users.length||users.some(u=>!u.sim))return alert("Please enter Target SIM Number for every user form.");
+x.targetUsers=users;
+x.target={sim:users[0].sim,imei:x.imei,from:users[0].from,to:users[0].to,name:users[0].owner,cnic:users[0].cnic,location:users[0].location,status:users[0].status,remarks:users[0].remarks};
+x.status="Investigation Data Saved";
+x.history.push({at:new Date().toISOString(),by:"admin",action:"Investigation data saved for "+users.length+" Target SIM user(s) against IMEI "+x.imei});
+save(c);openCase(id);
+}
 function reports(){return '<div class="card"><h2>📨 Reports / Attachments</h2><div class="notice">Attachment workflow remains optional as before.</div></div>'}
 function query(){return "<div class=\"card\"><h2>📞 CDR / IMEI / MSISDN</h2><div class=\"notice\">Use the case-level CDR buttons. All selected requests can be merged into one copyable box for Gmail.</div><button class=\"primary\" onclick='$(\"cdrModal\").classList.remove(\"hidden\")'>📨 Open Official CDR Copy Box</button></div>"}
 function showDistrict(d){let c=data().filter(x=>x.district===d);$("main").innerHTML='<div class="card"><h2>🏛️ '+d+'</h2>'+stations[d].map(ps=>'<div class="queue"><b>'+ps+'</b><br><small>'+c.filter(x=>x.ps===ps).length+' case(s)</small></div>').join("")+'</div>';hideMobile()}
