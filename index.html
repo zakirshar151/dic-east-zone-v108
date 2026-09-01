@@ -23,7 +23,7 @@
 <div id="cdrModal" class="cdrModal hidden" onclick="if(event.target===this)closeCdrBox()">
 <div class="cdrPanel">
 <h2>📨 Official CDR Request — Copy Box</h2>
-<div class="smallNote">Selected CDR requests are merged here so the complete text can be copied once and pasted into Gmail.</div>
+<div class="smallNote">Selected CDR requests are merged here so the complete text can be copied once and pasted into Gmail.</div><div class="formgrid"><label>From Date<input id="cdrFromDate" type="date"></label><label>To Date<input id="cdrToDate" type="date"></label></div><div class="notice">Individual <b>CDRs by IMEI</b> ka date range yahan se change karke <b>Regenerate</b> karein.</div>
 <label>Request Text</label>
 <textarea id="cdrText" spellcheck="false"></textarea>
 <div class="cdrTools">
@@ -171,7 +171,7 @@ el.value=old?old+"\n\n"+cdr:cdr;
 document.getElementById("cdrModal").classList.remove("hidden");
 document.getElementById("copyMsg").textContent="";
 }
-async function copyCdrText(){
+function regenerateCdrWithDates(){if(!pendingCdr.val)return;let f=document.getElementById("cdrFromDate")?.value||pendingCdr.from;let t=document.getElementById("cdrToDate")?.value||pendingCdr.to;if(!f||!t)return alert("From Date aur To Date select karein.");if(f>t)return alert("From Date, To Date se pehle ya barabar honi chahiye.");pendingCdr.from=f;pendingCdr.to=t;document.getElementById("cdrText").value=buildCdr(pendingCdr.kind,pendingCdr.val,f,t);document.getElementById("copyMsg").textContent="✓ Date range updated and request regenerated.";localStorage.setItem("dic_last_cdr_range",JSON.stringify({from:f,to:t}));}\nasync function copyCdrText(){
 let el=document.getElementById("cdrText"),text=el.value;
 if(!text.trim())return alert("CDR request box is empty.");
 try{await navigator.clipboard.writeText(text);}catch(e){el.select();document.execCommand("copy");}
