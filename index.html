@@ -22,7 +22,7 @@
 .excel-sortbar select,.excel-sortbar input{padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font-size:12px}
 .excel-sortbar .sort-info{font-size:11px;color:#667085;margin-left:auto}
 </style></head><body>
-<div id="loginPage" class="loginWrap"><div class="login"><div style="font-size:44px">🪪</div><h1>DIC East Zone</h1><div class="sub">Authorized Access</div><div class="tabs"><button id="adminTab" class="active" onclick="setMode('admin')">Admin Login</button><button id="agentTab" onclick="setMode('agent')">Agent Login</button></div><label id="idLabel">Admin ID</label><input id="loginId" placeholder="Admin ID"><label>Password</label><div class="passwordWrap"><input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"><button id="togglePass" class="eyeBtn" type="button" aria-label="Show password" title="Show password">👁️</button></div><button id="loginBtn" class="primary" type="button" onclick="login()">Login</button><div id="loginError" style="color:#c6283d;font-weight:700;margin-top:12px"></div></div></div>
+<div id="loginPage" class="loginWrap"><div class="login"><div style="font-size:44px">🪪</div><h1>DIC East Zone</h1><div class="sub">Authorized Access</div><div class="tabs"><button id="adminTab" class="active" onclick="setMode('admin')">Admin Login</button><button id="agentTab" onclick="setMode('agent')">Focal Person Login</button></div><label id="idLabel">Admin ID</label><input id="loginId" placeholder="Admin ID"><label>Password</label><div class="passwordWrap"><input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"><button id="togglePass" class="eyeBtn" type="button" aria-label="Show password" title="Show password">👁️</button></div><button id="loginBtn" class="primary" type="button" onclick="login()">Login</button><button id="forgotBtn" class="secondary" type="button" style="width:100%;margin-top:10px" onclick="forgotPassword()">🔐 Forgot Password</button><div id="loginError" style="color:#c6283d;font-weight:700;margin-top:12px"></div></div></div>
 <div id="app" class="app"><header class="header"><h1>DIC (Digital Information Cell) — East Zone</h1><p>Central Case Information &amp; Investigation Management System</p><button class="logout" onclick="logout()">Logout</button><button class="menuBtn" onclick="toggleMenu()">☰</button></header>
 <div class="layout"><nav id="side" class="side"><div class="navitem activeNav" onclick="show('dashboard')">🏠 Main Dashboard</div><div class="section">CASE MANAGEMENT</div><div class="navitem" onclick="show('newcase')">➕ New Case Request</div><div class="navitem" onclick="show('cases')">📋 All Cases</div><div class="navitem" onclick="show('approvals')">✅ Approval Queue</div><div class="navitem" onclick="show('reports')">📨 Reports / Attachments</div><div class="section">CDR &amp; QUERY TOOLS</div><div class="navitem" onclick="show('query')">📞 CDR / IMEI / MSISDN</div><div class="section">DISTRICTS</div><div class="navitem" onclick="showDistrict('District East')">🏛️ District East</div><div class="navitem" onclick="showDistrict('District Malir')">🏛️ District Malir</div><div class="navitem" onclick="showDistrict('District Korangi')">🏛️ District Korangi</div><div id="adminNav"><div class="section">ADMINISTRATION</div><div class="navitem" onclick="show('adminProfile')">👤 Admin Profile</div><div class="navitem" onclick="show('admins')">👥 Admins List</div><div class="navitem" onclick="show('officers')">👮 Officers / User IDs</div></div></nav><main id="main" class="content"></main></div></div>
 <div id="cdrModal" class="cdrModal hidden" onclick="if(event.target===this)closeCdrBox()">
@@ -43,7 +43,7 @@ const stations={"District East":["Aziz Bhatti","Bahadurabad","Baloch Colony","Br
 const KEY="dic_workflow_v108";let mode="admin",currentUser=null;
 function seed(){let x=safeJson(KEY,null);if(!Array.isArray(x)){x=[{id:"0001",type:"Mobile Snatching",district:"District Malir",ps:"Ibrahim Hyderi",date:"2026-08-30",imei:"123456789012345",msisdn:"789012345",complainant:"",masterNumbers:"",status:"Approved — Data Form Pending",createdBy:"Waseem-45",createdAt:new Date().toISOString(),uploadDate:new Date().toISOString().slice(0,10),target:{},attachments:[],history:[{at:new Date().toISOString(),by:"Waseem-45",action:"Case request submitted"},{at:new Date().toISOString(),by:"admin",action:"Approved — Data Form Pending"}]}];localStorage.setItem(KEY,JSON.stringify(x))}}
 seed();const $=id=>document.getElementById(id);document.addEventListener("DOMContentLoaded",()=>{["loginId","loginPass"].forEach(id=>$(id).addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();login()}}));$("loginBtn").addEventListener("click",login);$("adminTab").addEventListener("click",()=>setMode("admin"));$("agentTab").addEventListener("click",()=>setMode("agent"));$("togglePass").addEventListener("click",togglePassword);});window.addEventListener("error",e=>{const el=$("loginError");if(el&&!currentUser)el.textContent="System error: "+(e.message||"Please reload the page.");});function togglePassword(){const p=$("loginPass"),b=$("togglePass");const show=p.type==="password";p.type=show?"text":"password";b.textContent=show?"🙈":"👁️";b.setAttribute("aria-label",show?"Hide password":"Show password");b.title=show?"Hide password":"Show password"}function uploadDateOf(x){if(x.uploadDate)return String(x.uploadDate);if(x.createdAt)return String(x.createdAt).slice(0,10);return ""}function data(){let x=safeJson(KEY,[]);if(Array.isArray(x)){let dirty=false;x.forEach(r=>{if(r&&!r.uploadDate&&r.createdAt){r.uploadDate=String(r.createdAt).slice(0,10);dirty=true}});if(dirty)localStorage.setItem(KEY,JSON.stringify(x))}return Array.isArray(x)?x:[]}function save(x){localStorage.setItem(KEY,JSON.stringify(x))}
-function setMode(m){mode=m;$("adminTab").classList.toggle("active",m==="admin");$("agentTab").classList.toggle("active",m==="agent");$("idLabel").textContent=m==="admin"?"Admin ID":"Agent ID";$("loginId").placeholder=$("idLabel").textContent;$("loginError").textContent=""}
+function setMode(m){mode=m;$("adminTab").classList.toggle("active",m==="admin");$("agentTab").classList.toggle("active",m==="agent");$("idLabel").textContent=m==="admin"?"Admin ID":"Focal Person ID";$("loginId").placeholder=$("idLabel").textContent;$("loginError").textContent=""}
 function safeJson(key,fallback){try{const raw=localStorage.getItem(key);if(!raw)return fallback;const v=JSON.parse(raw);return v}catch(e){try{localStorage.removeItem(key)}catch(_){}return fallback}}
 function getAdmins(){let a=safeJson("dic_admins_v108",null);if(!Array.isArray(a)||!a.length){a=[{id:"admin",name:"Admin",cnic:"",email:"",password:"admin123",pic:""}];try{localStorage.setItem("dic_admins_v108",JSON.stringify(a))}catch(e){}}return a}
 function saveAdmins(a){localStorage.setItem("dic_admins_v108",JSON.stringify(a))}
@@ -290,5 +290,155 @@ function showDistrict(d){
   }).join("");
   $("main").innerHTML='<div class="card"><div class="districtPageHead"><div><h2>🏛️ '+esc(d)+'</h2><div class="smallNote">District → Police Stations → Agent / IO / SIO / SHO → Case Record</div></div><div class="districtPageTotal">'+c.length+'<small>Total Cases</small></div></div>'+(currentUser.role==="agent"?'<div class="notice">Station-restricted view: <b>'+esc(currentUser.station)+'</b></div>':'')+'<div class="stationGrid">'+stationCards+'</div></div><div class="actions"><button class="secondary" onclick="show(\'dashboard\')">← Dashboard</button></div>';
   hideMobile();
+}
+</script>
+<script>
+/* DIC Cloud Sync / Focal Person stability patch
+   Central source of truth: Supabase Edge Function dic-focal-api.
+   LocalStorage remains only as a UI cache/compatibility layer. */
+const DIC_API='https://uzoygpyqkdtwwwdqgyff.supabase.co/functions/v1/dic-focal-api';
+let dicToken=localStorage.getItem('dic_cloud_token')||'';
+let dicCloudOfficers=[];
+let dicCloudRequests=[];
+
+async function dicApi(action, body={}){
+  const res=await fetch(DIC_API,{method:'POST',headers:{'Content-Type':'application/json','apikey':'sb_publishable_ZDQnm_UMG0q7zHfS7o4V0Q_ljjIqjcG','Authorization':dicToken?'Bearer '+dicToken:'Bearer '+''},body:JSON.stringify({action,...body})});
+  let j={}; try{j=await res.json()}catch(e){}
+  if(!res.ok) throw new Error(j.error||('Request failed ('+res.status+')'));
+  return j;
+}
+function cacheOfficerList(list){
+  dicCloudOfficers=Array.isArray(list)?list:[];
+  const mapped=dicCloudOfficers.map(x=>({id:x.user_id,name:x.full_name,role:x.role==='Agent'?'Focal Person':x.role,designation:x.role==='Agent'?'Focal Person':x.role,rank:x.rank||'',cnic:x.cnic||'',contact:x.contact||'',email:x.email||'',district:x.district||'',station:x.station||'',password:'',pic:'',active:x.active!==false}));
+  if(mapped.length)localStorage.setItem('dic_agents_v108',JSON.stringify(mapped));
+  return mapped;
+}
+async function refreshCloudOfficers(){
+  if(!dicToken)return [];
+  try{const j=await dicApi('list_officers');return cacheOfficerList(j.officers||[]);}catch(e){console.warn('Officer sync:',e.message);return []}
+}
+function setFocalLabels(){
+  const tab=document.getElementById('agentTab'); if(tab)tab.textContent='Focal Person Login';
+  const idl=document.getElementById('idLabel'); if(idl&&mode==='agent')idl.textContent='Focal Person ID';
+  const p=document.querySelector('#loginPage .sub'); if(p)p.textContent='Authorized Access — Central Cloud Login';
+}
+function officerRoleLabel(r){return String(r||'Focal Person').toUpperCase()==='AGENT'?'Focal Person':(r||'Focal Person')}
+async function login(){
+  const id=String(document.getElementById('loginId')?.value||'').trim(), pass=String(document.getElementById('loginPass')?.value||''), err=document.getElementById('loginError');
+  if(err)err.textContent='';
+  if(!id||!pass){if(err)err.textContent='Please enter ID and password.';return false}
+  try{
+    const j=await dicApi('login',{kind:mode==='admin'?'admin':'focal',id,password:pass});
+    dicToken=j.token; localStorage.setItem('dic_cloud_token',dicToken);
+    const u=j.user||{};
+    if(mode==='admin'){
+      currentUser={role:'admin',id:u.id,name:u.name,cnic:u.cnic||'',email:u.email||'',pic:u.pic||''};
+      await refreshCloudOfficers(); await refreshCloudRequests();
+    }else{
+      currentUser={role:'agent',id:u.id,name:u.name,designation:officerRoleLabel(u.designation),station:u.station,district:u.district,email:u.email||'',cnic:u.cnic||''};
+    }
+    openApp();
+    return false;
+  }catch(e){
+    if(err)err.textContent=e.message||'Login failed.';
+    return false;
+  }
+}
+function logout(){localStorage.removeItem('dic_cloud_token');dicToken='';location.reload();}
+function officerForm(o){
+  o=o||{};
+  const ds=Object.keys(stations).map(d=>'<option '+(d===(o.district||'')?'selected':'')+'>'+esc(d)+'</option>').join('');
+  const role=officerRoleLabel(o.role||o.designation||'Focal Person');
+  const roles=['Focal Person','IO','SIO','SHO'].map(x=>'<option '+(x===role?'selected':'')+'>'+x+'</option>').join('');
+  return '<div class="card"><h3>'+ (o.id?'✏️ Edit Focal Person Profile':'➕ Create Focal Person Profile') +'</h3><div class="notice">User ID ek martaba create hoga aur <b>edit nahi hoga</b>. Police Station change karne par purani posting history محفوظ rahegi aur new station ki posting alag record hogi.</div><div class="formgrid"><label>Full Name<input id="fp_name" value="'+esc(o.name||'')+'"></label><label>Designation / Role<select id="fp_role">'+roles+'</select></label><label>Rank<input id="fp_rank" value="'+esc(o.rank||'')+'"></label><label>CNIC<input id="fp_cnic" value="'+esc(o.cnic||'')+'"></label><label>Contact<input id="fp_contact" value="'+esc(o.contact||'')+'"></label><label>Email <span class="smallNote">(Forgot Password ke liye registered email)</span><input id="fp_email" type="email" value="'+esc(o.email||'')+'"></label><label>District<select id="fp_district" onchange="fillFocalStations()">'+ds+'</select></label><label>Police Station<select id="fp_station"></select></label><label>User ID<input id="fp_id" value="'+esc(o.id||'')+'" '+(o.id?'readonly':'')+' placeholder="e.g. FP-001"></label><label>New Password<input id="fp_pass" type="password" placeholder="'+(o.id?'Leave blank to keep current':'Required')+'"></label><label>Confirm Password<input id="fp_pass2" type="password"></label></div><div class="actions"><button class="success btn" onclick="saveFocalPerson()">'+(o.id?'Save Changes':'Create Focal Person ID')+'</button><button class="secondary" onclick="show(\'officers\')">Cancel</button></div></div>';
+}
+function fillFocalStations(){
+  const d=document.getElementById('fp_district')?.value||'', s=document.getElementById('fp_station'); if(!s)return;
+  const current=(window._editingOfficer&&window._editingOfficer.station)||'';
+  s.innerHTML=(stations[d]||[]).map(x=>'<option '+(x===current?'selected':'')+'>'+esc(x)+'</option>').join('');
+}
+window._editingOfficer=null;
+function officers(){
+  if(currentUser.role!=='admin')return '<div class="card"><h2>👮 Focal Persons</h2><div class="notice">Admin only.</div></div>';
+  const a=dicCloudOfficers.length?dicCloudOfficers:cacheOfficerList(getAgentProfiles());
+  const rows=a.map(x=>'<tr><td>'+esc(x.full_name||x.name)+'</td><td><b>'+esc(officerRoleLabel(x.role))+'</b></td><td>'+esc(x.rank||'—')+'</td><td>'+esc(x.cnic||'—')+'</td><td>'+esc(x.contact||'—')+'</td><td>'+esc((x.district||'')+' — '+(x.station||''))+'</td><td>'+esc(x.email||'—')+'</td><td>'+esc(x.user_id||x.id)+'</td><td><button class="secondary" onclick="editFocalPerson(\''+esc(x.user_id||x.id)+'\')">Edit</button></td></tr>').join('');
+  setTimeout(()=>{const s=document.getElementById('fp_station'); if(s)fillFocalStations()},0);
+  return '<div class="card"><h2>👮 Focal Persons</h2><div class="notice"><b>One ID = one Focal Person.</b> Same ID ko dobara create nahi karna. Profile mein changes yahin se honge. Police Station change par old posting history محفوظ rahegi.</div><div class="tableWrap"><table class="table"><tr><th>Name</th><th>Role</th><th>Rank</th><th>CNIC</th><th>Contact</th><th>Posting</th><th>Email</th><th>User ID</th><th>Action</th></tr>'+rows+'</table></div></div>'+officerForm(null);
+}
+function editFocalPerson(id){
+  const x=dicCloudOfficers.find(v=>(v.user_id||'')===id)||getAgentProfiles().find(v=>v.id===id);
+  if(!x)return alert('Focal Person not found.');
+  window._editingOfficer={id:x.user_id||x.id,name:x.full_name||x.name,role:x.role,rank:x.rank,cnic:x.cnic,contact:x.contact,email:x.email,district:x.district,station:x.station};
+  document.getElementById('main').innerHTML=officerForm(window._editingOfficer);
+  fillFocalStations();
+}
+async function saveFocalPerson(){
+  if(currentUser.role!=='admin')return;
+  const id=document.getElementById('fp_id').value.trim(), name=document.getElementById('fp_name').value.trim(), pass=document.getElementById('fp_pass').value, pass2=document.getElementById('fp_pass2').value;
+  if(!id||!name)return alert('Name and User ID are required.');
+  if(pass&&pass!==pass2)return alert('Passwords do not match.');
+  try{
+    const j=await dicApi('save_officer',{officer:{user_id:id,full_name:name,role:document.getElementById('fp_role').value,rank:document.getElementById('fp_rank').value.trim(),cnic:document.getElementById('fp_cnic').value.trim(),contact:document.getElementById('fp_contact').value.trim(),email:document.getElementById('fp_email').value.trim(),district:document.getElementById('fp_district').value,station:document.getElementById('fp_station').value,password:pass}});
+    await refreshCloudOfficers();
+    alert(j.changedPosting?'Focal Person updated. New Police Station posting saved; old posting history preserved.':'Focal Person ID saved successfully.');
+    window._editingOfficer=null; show('officers');
+  }catch(e){alert(e.message||'Could not save Focal Person.');}
+}
+async function forgotPassword(){
+  const id=prompt('Focal Person ID:'); if(!id)return;
+  const email=prompt('Registered Email:'); if(!email)return;
+  const cnic=prompt('Registered CNIC:'); if(!cnic)return;
+  try{
+    const j=await dicApi('forgot_password',{id,email,cnic});
+    if(!j.verified)throw new Error('Verification failed.');
+    const np=prompt('Verification successful. Enter NEW password (minimum 6 characters):'); if(!np)return;
+    const cp=prompt('Confirm NEW password:'); if(np!==cp)return alert('Passwords do not match.');
+    await dicApi('reset_password',{password:np});
+    alert('Password changed successfully. Ab isi Focal Person ID se new password ke sath login karein.');
+  }catch(e){alert(e.message||'Password reset failed.');}
+}
+async function refreshCloudRequests(){
+  if(!dicToken)return [];
+  try{const j=await dicApi('list_requests');dicCloudRequests=j.requests||[];mergeCloudRequestsToLocalCases(dicCloudRequests);return dicCloudRequests}catch(e){console.warn('Request sync:',e.message);return []}
+}
+function requestToCase(r){
+  const p=r.payload||{}, caseId=p.caseId||p.id||r.request_id;
+  return {id:caseId,type:p.type||'Mobile Snatching',district:p.district||'',ps:p.ps||p.station||'',date:p.date||'',imei:p.imei||'',msisdn:p.msisdn||'',complainant:p.complainant||'',masterNumbers:p.masterNumbers||'',status:r.status==='Pending'?'Pending Admin Approval':(r.status==='Approved'?'Approved — Data Form Pending':r.status),createdBy:r.created_by||p.created_by||'',createdAt:r.created_at,uploadDate:(r.created_at||'').slice(0,10),target:{},attachments:[],history:[{at:r.created_at,by:r.created_by||'',action:'Cloud request '+r.status}]};
+}
+function mergeCloudRequestsToLocalCases(list){
+  const local=data(), by=new Map(local.map(x=>[String(x.id),x]));
+  (list||[]).forEach(r=>{const x=requestToCase(r); if(x.id)by.set(String(x.id),{...(by.get(String(x.id))||{}),...x})});
+  save(Array.from(by.values()));
+}
+function approvals(){
+  if(currentUser.role!=='admin')return '<div class="card"><h2>Approval Queue</h2><div class="notice">Admin only.</div></div>';
+  const local=data().filter(x=>x.status==='Pending Admin Approval');
+  const cloud=dicCloudRequests.filter(r=>r.status==='Pending');
+  setTimeout(()=>refreshCloudRequests().then(()=>renderApprovalCloud()).catch(()=>{}),50);
+  return '<div class="card"><h2>✅ All Admin Requests</h2><div id="cloudApprovalList">'+(cloud.length?cloud.map(cloudRequestCard).join(''):'<div class="empty">Loading all admin requests…</div>')+'</div></div><div class="card"><h3>Legacy Local Queue</h3>'+ (local.length?local.map(x=>'<div class="queue"><b>Case '+esc(x.id)+'</b><p>'+esc(x.ps)+' • '+esc(x.complainant||'No complainant')+'</p><button class="success btn" onclick="approve(\''+esc(x.id)+'\')">Approve &amp; Open Data Form</button></div>').join(''):'<div class="empty">No local pending approvals.</div>')+'</div>';
+}
+function cloudRequestCard(r){
+  const p=r.payload||{};
+  return '<div class="queue"><b>'+esc(r.request_id)+'</b><p>'+esc(p.type||r.request_type)+' • '+esc(p.district||'')+' — '+esc(p.ps||p.station||'')+'</p><small>From Focal Person: <b>'+esc(p.created_by_name||r.created_by||'')+'</b> • '+new Date(r.created_at).toLocaleString()+'</small><div class="actions"><button class="success btn" onclick="approveCloudRequest(\''+esc(r.request_id)+'\')">Approve</button></div></div>';
+}
+function renderApprovalCloud(){const el=document.getElementById('cloudApprovalList');if(!el)return;const c=dicCloudRequests.filter(r=>r.status==='Pending');el.innerHTML=c.length?c.map(cloudRequestCard).join(''):'<div class="empty">No pending requests — all admins are synced.</div>';mergeCloudRequestsToLocalCases(dicCloudRequests);}
+async function approveCloudRequest(rid){
+  try{await dicApi('set_request_status',{request_id:rid,status:'Approved'});await refreshCloudRequests();renderApprovalCloud();alert('Request approved. All admin devices will see the updated status.');}catch(e){alert(e.message||'Approval failed.');}
+}
+async function submitRequest(){
+  if(currentUser.role!=='agent')return;
+  const id=document.getElementById('n_id').value.trim();
+  if(!id)return alert('Enter a unique Case ID.');
+  const payload={caseId:id,type:document.getElementById('n_type').value,district:currentUser.district,ps:currentUser.station,date:document.getElementById('n_date').value,imei:document.getElementById('n_imei').value.trim(),msisdn:document.getElementById('n_msisdn').value.trim(),complainant:document.getElementById('n_complainant').value.trim(),masterNumbers:document.getElementById('n_master').value.trim(),remarks:document.getElementById('n_note').value.trim()};
+  try{
+    const j=await dicApi('submit_request',{request_id:'REQ-'+id,payload});
+    const local=data(); local.push(requestToCase(j.request)); save(local); alert('Request sent. It is now stored centrally and will appear for every Admin.'); show('cases');
+  }catch(e){alert(e.message||'Request could not be sent.');}
+}
+setMode=(()=>{const original=window.setMode;return function(m){mode=m;document.getElementById('adminTab').classList.toggle('active',m==='admin');document.getElementById('agentTab').classList.toggle('active',m==='agent');document.getElementById('idLabel').textContent=m==='admin'?'Admin ID':'Focal Person ID';document.getElementById('loginId').placeholder=document.getElementById('idLabel').textContent;document.getElementById('loginError').textContent='';setFocalLabels();}})();
+setFocalLabels();
+if(window.supabase&&window.supabase.createClient){
+  window.dicSupabase=window.supabase.createClient('https://uzoygpyqkdtwwwdqgyff.supabase.co','sb_publishable_ZDQnm_UMG0q7zHfS7o4V0Q_ljjIqjcG',{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  window.dicSupabase.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){alert('Password recovery link received. Please use the Focal Person reset flow after verification.');}});
 }
 </script></body></html>
