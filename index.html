@@ -286,9 +286,9 @@ function showDistrict(d){
   const list=stations[d]||[];
   const stationCards=list.filter(ps=>currentUser.role!=="agent"||ps===currentUser.station).map(ps=>{
     const sc=c.filter(x=>x.ps===ps),o=stationOfficers(d,ps);
-    return '<button class="stationCard" onclick="showStation(\''+d+'\',\''+ps.replace(/'/g,"\\\\'")+'\')"><div class="stationHead"><b>🏢 '+esc(ps)+'</b><span>'+sc.length+' case(s)</span></div><div class="stationRoles"><span>Agent: '+o.agent+'</span><span>IO: '+o.io+'</span><span>SIO: '+o.sio+'</span><span>SHO: '+o.sho+'</span></div><div class="stationOpen">View Station Record →</div></button>';
+    return '<button class="stationCard" onclick="showStation(\''+d+'\',\''+ps.replace(/'/g,"\\\\'")+'\')"><div class="stationHead"><b>🏢 '+esc(ps)+'</b><span>'+sc.length+' case(s)</span></div><div class="stationRoles"><span>Focal Person: '+o.agent+'</span><span>IO: '+o.io+'</span><span>SIO: '+o.sio+'</span><span>SHO: '+o.sho+'</span></div><div class="stationOpen">View Station Record →</div></button>';
   }).join("");
-  $("main").innerHTML='<div class="card"><div class="districtPageHead"><div><h2>🏛️ '+esc(d)+'</h2><div class="smallNote">District → Police Stations → Agent / IO / SIO / SHO → Case Record</div></div><div class="districtPageTotal">'+c.length+'<small>Total Cases</small></div></div>'+(currentUser.role==="agent"?'<div class="notice">Station-restricted view: <b>'+esc(currentUser.station)+'</b></div>':'')+'<div class="stationGrid">'+stationCards+'</div></div><div class="actions"><button class="secondary" onclick="show(\'dashboard\')">← Dashboard</button></div>';
+  $("main").innerHTML='<div class="card"><div class="districtPageHead"><div><h2>🏛️ '+esc(d)+'</h2><div class="smallNote">District → Police Stations → Focal Person / IO / SIO / SHO → Case Record</div></div><div class="districtPageTotal">'+c.length+'<small>Total Cases</small></div></div>'+(currentUser.role==="agent"?'<div class="notice">Station-restricted view: <b>'+esc(currentUser.station)+'</b></div>':'')+'<div class="stationGrid">'+stationCards+'</div></div><div class="actions"><button class="secondary" onclick="show(\'dashboard\')">← Dashboard</button></div>';
   hideMobile();
 }
 </script>
