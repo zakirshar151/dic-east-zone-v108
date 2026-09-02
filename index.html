@@ -393,7 +393,7 @@ async function forgotPassword(){
     if(!j.verified)throw new Error('Verification failed.');
     const np=prompt('Verification successful. Enter NEW password (minimum 6 characters):'); if(!np)return;
     const cp=prompt('Confirm NEW password:'); if(np!==cp)return alert('Passwords do not match.');
-    await dicApi('reset_password',{password:np});
+    await dicApi('reset_password',{password:np},j.resetToken);
     alert('Password changed successfully. Ab isi Focal Person ID se new password ke sath login karein.');
   }catch(e){alert(e.message||'Password reset failed.');}
 }
