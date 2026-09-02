@@ -313,7 +313,7 @@ function cacheOfficerList(list){
   if(mapped.length)localStorage.setItem('dic_agents_v108',JSON.stringify(mapped));
   return mapped;
 }
-async function refreshCloudOfficers(){
+async function migrateLegacyOfficers(){\n  if(!dicToken)return;\n  const legacy=safeJson('dic_agents_v108',[]);\n  if(!Array.isArray(legacy)||!legacy.length)return;\n  for(const x of legacy){\n    if(!x||!x.id||!x.name)continue;\n    try{await dicApi('save_officer',{officer:{user_id:x.id,full_name:x.name,role:officerRoleLabel(x.role||x.designation||'Focal Person'),rank:x.rank||'',cnic:x.cnic||'',contact:x.contact||'',email:x.email||'',district:x.district||'District Malir',station:x.station||'Ibrahim Hyderi',password:x.password||''}});}catch(e){console.warn('Legacy officer migration:',x.id,e.message)}\n  }\n}\nasync function refreshCloudOfficers(){
   if(!dicToken)return [];
   try{const j=await dicApi('list_officers');return cacheOfficerList(j.officers||[]);}catch(e){console.warn('Officer sync:',e.message);return []}
 }
@@ -333,7 +333,7 @@ async function login(){
     const u=j.user||{};
     if(mode==='admin'){
       currentUser={role:'admin',id:u.id,name:u.name,cnic:u.cnic||'',email:u.email||'',pic:u.pic||''};
-      await refreshCloudOfficers(); await refreshCloudRequests();
+      await migrateLegacyOfficers(); await refreshCloudOfficers(); await refreshCloudRequests();
     }else{
       currentUser={role:'agent',id:u.id,name:u.name,designation:officerRoleLabel(u.designation),station:u.station,district:u.district,email:u.email||'',cnic:u.cnic||''};
     }
