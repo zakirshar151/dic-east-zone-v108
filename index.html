@@ -168,14 +168,18 @@ return values.map((v,i)=>"MSISDN REQUEST #"+(i+1)+" — "+detectNetworkMsisdn(v)
 function bulkCdrQuery(kind){const val=$(kind==="imei"?"bulkImei":"bulkMsisdn")?.value||"";const from=$("bulkFrom")?.value||"";const to=$("bulkTo")?.value||"";if(!splitCdrValues(val).length)return alert(kind==="imei"?"کم از کم ایک IMEI درج کریں۔":"کم از کم ایک MSISDN درج کریں۔");cdrQuery(kind,val,from,to)}
 function cdrQuery(kind,val,from,to){
 if(!val)return alert(kind==="imei"?"IMEI is empty.":"MSISDN is empty.");
-let f=from||document.getElementById("t_from")?.value||"";
-let t=to||document.getElementById("t_to")?.value||"";
-let cdr=buildCdr(kind,val,f,t),el=document.getElementById("cdrText"),old=el.value.trim();
-el.value=old?old+"\n\n"+cdr:cdr;
+let saved={};try{saved=JSON.parse(localStorage.getItem("dic_last_cdr_range")||"{}")}catch(e){}
+let f=from||document.getElementById("t_from")?.value||saved.from||new Date().toISOString().slice(0,10);
+let t=to||document.getElementById("t_to")?.value||saved.to||new Date().toISOString().slice(0,10);
+pendingCdr={kind,val,from:f,to:t};
+let cdr=buildCdr(kind,val,f,t),el=document.getElementById("cdrText");
+el.value=cdr;
+let fd=document.getElementById("cdrFromDate"),td=document.getElementById("cdrToDate");if(fd)fd.value=f;if(td)td.value=t;
 document.getElementById("cdrModal").classList.remove("hidden");
 document.getElementById("copyMsg").textContent="";
 }
-function regenerateCdrWithDates(){if(!pendingCdr.val)return;let f=document.getElementById("cdrFromDate")?.value||pendingCdr.from;let t=document.getElementById("cdrToDate")?.value||pendingCdr.to;if(!f||!t)return alert("From Date aur To Date select karein.");if(f>t)return alert("From Date, To Date se pehle ya barabar honi chahiye.");pendingCdr.from=f;pendingCdr.to=t;document.getElementById("cdrText").value=buildCdr(pendingCdr.kind,pendingCdr.val,f,t);document.getElementById("copyMsg").textContent="✓ Date range updated and request regenerated.";localStorage.setItem("dic_last_cdr_range",JSON.stringify({from:f,to:t}));}\nasync function copyCdrText(){
+function regenerateCdrWithDates(){if(!pendingCdr.val)return;let f=document.getElementById("cdrFromDate")?.value||pendingCdr.from;let t=document.getElementById("cdrToDate")?.value||pendingCdr.to;if(!f||!t)return alert("From Date aur To Date select karein.");if(f>t)return alert("From Date, To Date se pehle ya barabar honi chahiye.");pendingCdr.from=f;pendingCdr.to=t;document.getElementById("cdrText").value=buildCdr(pendingCdr.kind,pendingCdr.val,f,t);document.getElementById("copyMsg").textContent="✓ Date range updated and request regenerated.";localStorage.setItem("dic_last_cdr_range",JSON.stringify({from:f,to:t}));}
+async function copyCdrText(){
 let el=document.getElementById("cdrText"),text=el.value;
 if(!text.trim())return alert("CDR request box is empty.");
 try{await navigator.clipboard.writeText(text);}catch(e){el.select();document.execCommand("copy");}
