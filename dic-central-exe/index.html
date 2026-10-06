@@ -997,8 +997,7 @@ function dicOpenIDB(){
   if(!window.indexedDB)return Promise.reject(new Error("IndexedDB unavailable"));
   if(dicIdbPromise)return dicIdbPromise;
   dicIdbPromise=new Promise((resolve,reject)=>{
-    const req=indexedDB.open(DIC_IDB_NAME,DIC_IDB_VERSION);
-    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(DIC_IDB_STORE))db.createObjectStore(DIC_IDB_STORE);};
+    const req=indexedDB.open(DIC_IDB_NAME,DIC_IDB_VERSION);    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(DIC_IDB_STORE))db.createObjectStore(DIC_IDB_STORE);};
     req.onsuccess=()=>resolve(req.result);
     req.onerror=()=>reject(req.error||new Error("IndexedDB open failed"));
   });
@@ -1997,8 +1996,7 @@ function clearUnifiedEnrichment(){
   const p=document.getElementById("unifiedEnrichmentPaste"),f=document.getElementById("unifiedEnrichmentFiles");
   if(p)p.value=""; if(f)f.value=""; setEnrichmentStatus("");
 }
-function parseSubscriberLines(text){
-  const out=[];
+function parseSubscriberLines(text){  const out=[];
   const lines=String(text||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   let current=null;
   const flush=()=>{if(current&&current.msisdn)out.push(current);current=null;};
@@ -2219,15 +2217,22 @@ function printCasePDF(){
   <table><thead><tr>${headers.map(h=>`<th>${escPdf(h)}</th>`).join("")}</tr></thead><tbody>
   ${rows.map(r=>`<tr>${headers.map(h=>`<td>${escPdf(r[h])}</td>`).join("")}</tr>`).join("")}
   </tbody></table>
-<script id="dic-central-bridge">
-(function(){
-  window.__dicGetData=function(){try{return Array.isArray(data)?data:[];}catch(e){return[];}};
-  window.__dicSetData=function(v){try{data=v;return true;}catch(e){return false;}};
-  window.addEventListener("load",function(){try{if(window.dicCentralSync)window.dicCentralSync.init();}catch(e){console.warn("DIC Central Sync init failed",e);}});
-})();
-</script>
-<script src="vendor/supabase.min.js"></script>
-<script src="src/central-sync.js"></script>
+<script id="DIC-TELENOR-REANALYZE-FINAL">
+function reanalyzeTelenorImeiResult(){
+  const el=document.getElementById("imeiResultTelenorFile");
+  if(el && el.files && el.files.length){
+    networkImeiResultFiles["Telenor"]=Array.from(el.files);
+    analyzeTelenorImeiResults().catch(err=>{
+      const b=document.getElementById("networkImeiResultStatus");
+      if(b){b.innerHTML="<b>Telenor error:</b> "+esc(err?.message||err);b.style.color="#b42318";}
+      console.error(err);
+    });
+  }else{
+    const b=document.getElementById("networkImeiResultStatus");
+    if(b){b.textContent="Pehle Telenor IMEI Result Excel attach karein.";b.style.color="#b42318";}
+  }
+}
+<\/script>
 </body></html>`);
   w.document.close();
 }
@@ -2990,8 +2995,7 @@ function zamanBuildDetailRows(r){
         status:String(x.status||""),
         risk:zamanRiskForPeriod(period,r["DATE OF OFFENCE"]),
         idx:i
-      };
-    });
+      };    });
 
     // Explicit map rows are already exact IMEI/SIM pairs. Do not hide an
     // UNTRACE IMEI just because it has no SIM; that empty SIM row is the
@@ -3990,8 +3994,7 @@ function openCaseForm(){
       const o=document.createElement("option");o.value=ps;o.textContent=ps;s.appendChild(o);
     });
   };
-  document.getElementById("caseNumber").value="";
-  document.getElementById("caseTitle").value="Mobile Snatching Cases";
+  document.getElementById("caseNumber").value="";  document.getElementById("caseTitle").value="Mobile Snatching Cases";
   document.getElementById("caseModal").style.display="block";
 }
 function closeCaseForm(){document.getElementById("caseModal").style.display="none";}
@@ -4644,30 +4647,38 @@ function telenorNum(v){
   return s;
 }
 function telenorParseMDY(value){
+  // XLSX with cellDates:true returns a real Date object for Excel date cells.
+  // Keep the actual calendar date stored in the workbook.
   if(value instanceof Date && !isNaN(value.getTime())){
     return {y:value.getFullYear(),m:value.getMonth()+1,d:value.getDate()};
   }
+
+  // Excel serial date fallback.
+  if(typeof value==="number" && isFinite(value) && value>20000 && value<80000){
+    const dt=new Date(Date.UTC(1899,11,30)+value*86400000);
+    if(!isNaN(dt.getTime()))
+      return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()};
+  }
+
   const s=String(value??"").trim();
   if(!s)return null;
-  let m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})(?:\s|T|$)/);
+
+  // ISO YYYY-MM-DD.
+  let m=s.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})(?:[ T].*)?$/);
   if(m){
-    const mm=+m[1],dd=+m[2],yy=+m[3];
-    const dt=new Date(yy,mm-1,dd);
-    if(dt.getFullYear()===yy && dt.getMonth()===mm-1 && dt.getDate()===dd)
+    const yy=+m[1],mm=+m[2],dd=+m[3],dt=new Date(yy,mm-1,dd);
+    if(dt.getFullYear()===yy&&dt.getMonth()===mm-1&&dt.getDate()===dd)
       return {y:yy,m:mm,d:dd};
   }
-  m=s.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})(?:\s|T|$)/);
+
+  // Telenor text export: MM/DD/YYYY or MM-DD-YYYY.
+  m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})(?:[ T].*)?$/);
   if(m){
-    const yy=+m[1],mm=+m[2],dd=+m[3];
-    const dt=new Date(yy,mm-1,dd);
-    if(dt.getFullYear()===yy && dt.getMonth()===mm-1 && dt.getDate()===dd)
+    const mm=+m[1],dd=+m[2],yy=+m[3],dt=new Date(yy,mm-1,dd);
+    if(dt.getFullYear()===yy&&dt.getMonth()===mm-1&&dt.getDate()===dd)
       return {y:yy,m:mm,d:dd};
   }
-  const n=Number(s);
-  if(Number.isFinite(n)&&n>20000&&n<100000){
-    const dt=new Date(Date.UTC(1899,11,30)+n*86400000);
-    if(!isNaN(dt.getTime()))return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()};
-  }
+
   return null;
 }
 function telenorDateISO(v){
@@ -4705,70 +4716,191 @@ async function telenorReadFile(file){
 }
 async function analyzeTelenorImeiResults(){
   const files=networkImeiResultFiles["Telenor"]||[];
+  const box=document.getElementById("networkImeiResultStatus");
   if(!files.length)return;
-  const idx=mobilinkCurrentCaseIndex();
-  if(idx<0){
-    const box=document.getElementById("networkImeiResultStatus");
-    if(box)box.textContent="Telenor file attached. Ab current case Edit karke open karein, phir analyzer current case par run hoga.";
+
+  /*
+    FINAL Telenor fix:
+    1) Read the Excel first.
+    2) Match IMEI using the first 14 digits.
+    3) If stationEntryIndex is stale/missing, find the case in data[] by IMEI.
+    4) Telenor activity is valid when it is STRICTLY AFTER Date of Offence.
+       We do not discard a matched row merely because the PC's system date is
+       earlier; the result file is the evidence being attached to the case.
+    5) Keep every existing network SIM relation and merge the Telenor pair.
+  */
+
+  const allRows=[];
+  for(const file of files) allRows.push(...await telenorReadFile(file));
+
+  const rowsWithKeys=allRows.map(row=>{
+    const keys=Object.keys(row||{});
+    const find=(names)=>{
+      for(const n of names){
+        const k=keys.find(x=>cleanKey(x)===cleanKey(n));
+        if(k!==undefined)return row[k];
+      }
+      for(const n of names){
+        const q=cleanKey(n);
+        const k=keys.find(x=>{
+          const z=cleanKey(x);
+          return z.includes(q)||q.includes(z);
+        });
+        if(k!==undefined)return row[k];
+      }
+      return "";
+    };
+    return {
+      raw:row,
+      imei:telenorNum(find(["IMEI","IMEI No","IMEI Number"])),
+      msisdn:normalizeAnyPhone(find(["MSISDN","Mobile","Mobile Number","MSISDN Number"])),
+      dateValue:find(["CALL_START_DT_TM","CALL START DT TM","Call Start Date Time","Call Start DateTime","Datetime","Date Time"])
+    };
+  });
+
+  // Helper: first-14 IMEI normalization.
+  const first14=v=>{
+    const d=telenorNum(v);
+    return d.length>=14?d.slice(0,14):"";
+  };
+
+  const fileImeiSet=new Set(rowsWithKeys.map(x=>first14(x.imei)).filter(x=>x.length===14));
+
+  // Find the actual open case. Prefer stationEntryIndex, but never trust a
+  // stale index if its IMEI does not correspond to the uploaded result.
+  let idx=mobilinkCurrentCaseIndex();
+  let r=(idx>=0 && data[idx])?data[idx]:null;
+
+  const caseImeisOf=(row)=>{
+    if(!row)return[];
+    return [...new Set(
+      splitCellList(row["IMEI"]).map(telenorNum).filter(x=>/^\d{14,15}$/.test(x))
+    )];
+  };
+
+  let currentImeis=caseImeisOf(r);
+  const currentSet=new Set(currentImeis.map(first14));
+
+  if(!currentSet.size || ![...currentSet].some(x=>fileImeiSet.has(x))){
+    // Search all saved cases by IMEI so a stale stationEntryIndex cannot cause
+    // "IMEI match rows: 0" when the visible case actually contains the IMEI.
+    let found=-1;
+    for(let i=0;i<data.length;i++){
+      const cis=caseImeisOf(data[i]);
+      const cset=new Set(cis.map(first14));
+      if([...cset].some(x=>fileImeiSet.has(x))){
+        found=i; break;
+      }
+    }
+    if(found>=0){
+      idx=found;
+      r=data[idx];
+      currentImeis=caseImeisOf(r);
+    }
+  }
+
+  if(!r || !currentImeis.length){
+    if(box){
+      box.innerHTML=`<b>Telenor:</b> Excel mein ${allRows.length} row(s) mili, lekin current/saved cases mein matching IMEI nahi mila.`;
+      box.style.color="#b42318";
+    }
     return;
   }
-  const r=data[idx];
-  const caseImeis=[...new Set(splitCellList(r["IMEI"]).map(telenorNum).filter(x=>/^\d{14,15}$/.test(x)))];
-  if(!caseImeis.length)throw new Error("Current case mein valid 14/15-digit IMEI nahi mila.");
+
+  const caseSet14=new Set(currentImeis.map(first14));
+
   const offenceISO=mobilinkCaseDateISO(r["DATE OF OFFENCE"]);
-  if(!offenceISO)throw new Error("Current case ki Date of Offence valid DD/MM/YYYY mein nahi mili.");
-  const today=new Date();
-  const todayISO=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-  const caseSet14=new Set(caseImeis.map(x=>x.slice(0,14)));
-  const allRows=[];
-  for(const file of files)allRows.push(...await telenorReadFile(file));
-  const pairMap=new Map();
-  let matchedRows=0;
-  for(const row of allRows){
-    const keys=Object.keys(row);
-    const imeiRaw=telenorNum(row[keys.find(k=>cleanKey(k)==="imei")||""]);
-    const imei14=imeiRaw.length>=14?imeiRaw.slice(0,14):"";
-    const msisdn=normalizeAnyPhone(row[keys.find(k=>cleanKey(k)==="msisdn")||""]);
-    const dateISO=telenorDateISO(row[keys.find(k=>cleanKey(k)==="callstartdttm")||""]);
-    if(!imei14||!caseSet14.has(imei14)||!msisdn||!dateISO)continue;
-    if(dateISO<=offenceISO||dateISO>todayISO)continue;
-    matchedRows++;
-    const key=imei14+"|"+msisdn;
-    const prev=pairMap.get(key);
-    if(!prev||dateISO>prev.lastDate)pairMap.set(key,{imei14,msisdn,lastDate:dateISO});
+  if(!offenceISO){
+    if(box){
+      box.innerHTML=`<b>Telenor:</b> Date of Offence <b>${esc(r["DATE OF OFFENCE"]||"")}</b> valid DD/MM/YYYY mein nahi mili.`;
+      box.style.color="#b42318";
+    }
+    return;
   }
+
+  const pairMap=new Map();
+  let imeiMatchedRows=0;
+  let parsedDateRows=0;
+  let postOffenceRows=0;
+  let futureRows=0;
+
+  for(const x of rowsWithKeys){
+    const im=first14(x.imei);
+    if(!im || !caseSet14.has(im) || !x.msisdn) continue;
+
+    imeiMatchedRows++;
+
+    const dateISO=telenorDateISO(x.dateValue);
+    if(!dateISO) continue;
+    parsedDateRows++;
+
+    // IMPORTANT: only Date of Offence controls TRACE OUT.
+    // A row after the offence is a valid trace result. Do not reject it merely
+    // because the workstation date is before the source-file date.
+    if(dateISO<=offenceISO) continue;
+
+    postOffenceRows++;
+    if(dateISO>`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-${String(new Date().getDate()).padStart(2,"0")}`)
+      futureRows++;
+
+    const key=im+"|"+x.msisdn;
+    const old=pairMap.get(key);
+    if(!old || dateISO>old.lastDate)
+      pairMap.set(key,{imei14:im,msisdn:x.msisdn,lastDate:dateISO});
+  }
+
+  // Preserve subscriber information already entered for the same MSISDN.
   const existingBySim=new Map(
-    simInputExistingRows(r).filter(x=>mobilinkMsisdnKey(x.msisdn))
+    simInputExistingRows(r)
+      .filter(x=>mobilinkMsisdnKey(x.msisdn))
       .map(x=>[mobilinkMsisdnKey(x.msisdn),x])
   );
-  const mapped=[],matchedMobiles=new Set();
-  for(const caseImei of caseImeis){
-    const imei14=caseImei.slice(0,14);
-    const pairs=[...pairMap.values()].filter(x=>x.imei14===imei14)
-      .sort((a,b)=>a.msisdn.localeCompare(b.msisdn));
-    if(!pairs.length){
-      mapped.push({imei:caseImei,msisdn:"",period:"",name:"",cnic:"",location:"",
-        status:pairMap.size?"TRACE OUT DUE TO SAME CASE":"UNTRACE",dataSent:""});
-      continue;
-    }
-    for(const pair of pairs){
-      const old=existingBySim.get(mobilinkMsisdnKey(pair.msisdn))||{};
-      mapped.push({imei:caseImei,msisdn:pair.msisdn,
-        period:`LAST ACTIVITY: ${telenorDisplayISO(pair.lastDate)}`,
-        name:old.name||"",cnic:old.cnic||"",location:old.location||"",
-        status:"TRACE OUT",dataSent:old.dataSent||""});
-      matchedMobiles.add(pair.msisdn);
-    }
+
+  // Start from existing rows so other networks are not erased.
+  const mapped=simInputExistingRows(r).map(x=>({
+    imei:x.imei||"",
+    msisdn:x.msisdn||"",
+    period:x.period||"",
+    name:x.name||"",
+    cnic:x.cnic||"",
+    location:x.location||"",
+    status:x.status||"PENDING",
+    dataSent:x.dataSent||""
+  }));
+
+  const mappedKeys=new Set(
+    mapped.map(x=>`${first14(x.imei)}|${mobilinkMsisdnKey(x.msisdn)}`)
+  );
+
+  // Add/merge Telenor results against the EXACT matched case IMEI.
+  for(const pair of pairMap.values()){
+    const matchingCaseImei=currentImeis.find(ci=>first14(ci)===pair.imei14)||pair.imei14;
+    const old=existingBySim.get(mobilinkMsisdnKey(pair.msisdn))||{};
+    const key=`${pair.imei14}|${mobilinkMsisdnKey(pair.msisdn)}`;
+
+    const existingIndex=mapped.findIndex(x=>
+      `${first14(x.imei)}|${mobilinkMsisdnKey(x.msisdn)}`===key
+    );
+
+    const obj={
+      imei:matchingCaseImei,
+      msisdn:pair.msisdn,
+      period:`LAST ACTIVITY: ${telenorDisplayISO(pair.lastDate)}`,
+      name:old.name||"",
+      cnic:old.cnic||"",
+      location:old.location||"",
+      status:"TRACE OUT",
+      dataSent:old.dataSent||""
+    };
+
+    if(existingIndex>=0) mapped[existingIndex]=obj;
+    else mapped.push(obj);
+    mappedKeys.add(key);
   }
-  simInputExistingRows(r).forEach(old=>{
-    const k=mobilinkMsisdnKey(old.msisdn);
-    if(!k||matchedMobiles.has(k))return;
-    if(!mapped.some(x=>x.msisdn&&mobilinkMsisdnKey(x.msisdn)===k))
-      mapped.push({imei:"",msisdn:old.msisdn||"",period:old.period||"",name:old.name||"",
-        cnic:old.cnic||"",location:old.location||"",status:old.status||"PENDING",
-        dataSent:old.dataSent||""});
-  });
+
   const shown=mapped.filter(x=>x.msisdn);
+
+  // Case-level fields.
   r["_IMEI_SIM_MAP"]=JSON.stringify(mapped);
   r["MSISDN"]=shown.map(x=>x.msisdn||"").join("\n");
   r["NAME"]=shown.map(x=>x.name||"").join("\n");
@@ -4776,17 +4908,42 @@ async function analyzeTelenorImeiResults(){
   r["USE PERIOD"]=shown.map(x=>x.period||"").join("\n");
   r["LOCATION"]=shown.map(x=>x.location||"").join("\n");
   r["DATA SENT"]=shown.map(x=>x.dataSent||"").join("\n");
-  r["STATUS"]=mapped.some(x=>x.status==="TRACE OUT")?"TRACE OUT":"UNTRACE";
-  save();render();renderStationRecords(selectedDistrict,selectedStation);renderCaseCards();
+
+  if(pairMap.size>0) r["STATUS"]="TRACE OUT";
+
+  // Force the current index to the actual case found above.
+  const entryIndex=document.getElementById("stationEntryIndex");
+  if(entryIndex)entryIndex.value=String(idx);
+
+  // Save/render all views, then refresh the entry box.
+  save();
+  render();
+  try{renderStationRecords(selectedDistrict,selectedStation);}catch(_){}
+  try{renderCaseCards();}catch(_){}
+
   setStationEntryValue("entryMSISDN",r["MSISDN"]||"");
-  if(typeof buildSimSubscriberRows==="function")buildSimSubscriberRows(shown);
   setStationEntryValue("entryPeriod",r["USE PERIOD"]||"");
-  const box=document.getElementById("networkImeiResultStatus");
+
+  if(typeof buildSimSubscriberRows==="function"){
+    buildSimSubscriberRows(shown);
+  }
+
   if(box){
-    const detail=mapped.filter(x=>x.imei).map(x=>`${x.imei}: ${x.msisdn||"NO SIM"} — ${x.status}`).join(" | ");
-    box.innerHTML=`<b>Telenor analyzed &amp; filled current case with strict IMEI→SIM matching.</b> `+
-      `${allRows.length} rows read; ${matchedRows} qualifying rows; ${shown.length} IMEI/SIM match(es). `+
-      `<span style="color:#334155">${esc(detail)}</span>`;
+    const details=[...pairMap.values()]
+      .map(x=>{
+        const ci=currentImeis.find(v=>first14(v)===x.imei14)||x.imei14;
+        return `${ci} → ${x.msisdn} → ${telenorDisplayISO(x.lastDate)} → TRACE OUT`;
+      }).join(" | ");
+
+    box.innerHTML=
+      `<b>✅ Telenor analyzed &amp; filled current case.</b> `+
+      `Excel rows: <b>${allRows.length}</b> · `+
+      `IMEI match rows: <b>${imeiMatchedRows}</b> · `+
+      `Date parsed: <b>${parsedDateRows}</b> · `+
+      `Post-offence rows: <b>${postOffenceRows}</b> · `+
+      `New/merged SIM matches: <b>${pairMap.size}</b>`+
+      (futureRows?` · <span style="color:#b45309">Future-dated source rows: ${futureRows}</span>`:"")+
+      `<br><span style="color:#334155">${esc(details||"No post-offence Telenor SIM found.")}</span>`;
     box.style.color="#166534";
   }
 }
@@ -4836,8 +4993,7 @@ async function analyzeUfoneImeiResults(){
   if(!files.length)return;
   const idx=mobilinkCurrentCaseIndex();
   if(idx<0){const b=document.getElementById("networkImeiResultStatus");if(b)b.textContent="Ufone file attached. Current case Edit karke open karein.";return;}
-  const r=data[idx];
-  const caseImeis=[...new Set(splitCellList(r["IMEI"]).map(mobilinkNum).filter(x=>/^\d{14,15}$/.test(x)))];
+  const r=data[idx];  const caseImeis=[...new Set(splitCellList(r["IMEI"]).map(mobilinkNum).filter(x=>/^\d{14,15}$/.test(x)))];
   if(!caseImeis.length)throw new Error("Current case mein valid IMEI nahi mila.");
   const offenceISO=mobilinkCaseDateISO(r["DATE OF OFFENCE"]);
   if(!offenceISO)throw new Error("Date of Offence valid DD/MM/YYYY mein nahi mili.");
@@ -5836,8 +5992,7 @@ async function analyzeMobilinkCdrForImeiCase(){
     `Case Status: ${r['STATUS']||'UNTRACE'}`,
     '',
     'MSISDN | USE PERIOD | LOCATION | STATUS'
-  ];
-  simRows.forEach(x=>report.push(`${x.msisdn||'—'} | ${x.period||'—'} | ${x.location||'—'} | ${x.status||'—'}`));
+  ];  simRows.forEach(x=>report.push(`${x.msisdn||'—'} | ${x.period||'—'} | ${x.location||'—'} | ${x.status||'—'}`));
   if(!simRows.length)report.push('No MSISDN/A-Party found against the case IMEI(s).');
   panel.textContent=report.join('\n');
   box?.parentNode?.appendChild(panel);
@@ -6836,8 +6991,7 @@ function downloadEnhancedIntelHTML(){
 
 function dicEscapeRegExp(v){return String(v??"").replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
 function dicHighlight(v,q){
-  const text=String(v??"");
-  if(!q)return esc(text);
+  const text=String(v??"");  if(!q)return esc(text);
   const re=new RegExp(dicEscapeRegExp(q),"ig");
   let out="",last=0,m;
   while((m=re.exec(text))){out+=esc(text.slice(last,m.index))+"<mark>"+esc(m[0])+"</mark>";last=m.index+m[0].length;}
@@ -7836,8 +7990,7 @@ function printNetworkCDRPDF(network){
     return {locationUpdates,periodUpdates,added};
   }
   function v19Render(){
-    const box=document.getElementById('cdrAnalysisReport');if(!box)return;
-    const targets=v19State.targetRows;
+    const box=document.getElementById('cdrAnalysisReport');if(!box)return;    const targets=v19State.targetRows;
     const locs=topN(targets.map(x=>String(x.location||'').trim()).filter(Boolean),10);
     box.innerHTML='<div class="panel" style="padding:14px">'+
       '<h3 style="margin:0 0 6px">Current Case — Target IMEI CDR Review</h3>'+
@@ -8836,8 +8989,7 @@ v15RenderNetworkReview=v20RenderNetworkReview;
     for(const full of rawCaseImeiValues){
       const k=n14(full);
       if(/^\d{14}$/.test(k) && !caseImeiBy14.has(k)) caseImeiBy14.set(k,full);
-    }
-    const caseSet14=new Set(caseImeiBy14.keys());
+    }    const caseSet14=new Set(caseImeiBy14.keys());
 
     if(!caseSet14.size){
       setStatus('📎 <b>Zong file attached:</b> '+esc(fileNames)+'<br><span style="color:#b42318">Current case mein valid 14/15-digit IMEI nahi mila.</span>',false);
@@ -9836,8 +9988,7 @@ v15RenderNetworkReview=v20RenderNetworkReview;
       return validISO(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate());
     }
 
-    const s = String(v ?? '').trim();
-    if(!s) return '';
+    const s = String(v ?? '').trim();    if(!s) return '';
 
     // Telenor export: MM/DD/YYYY [time]
     let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:[ T].*)?$/);
@@ -10340,6 +10491,18 @@ window.reanalyzeTelenorImeiResult=function(){const el=document.getElementById('i
 window.pickNetworkImeiResult=function(network){const ids={'Mobilink/Warid':'imeiResultMobilinkFile','Zong':'imeiResultZongFile','Telenor':'imeiResultTelenorFile','Ufone':'imeiResultUfoneFile'};const el=document.getElementById(ids[network]);if(el){el.value='';el.click()}};
 })();
 </script>
+<!-- DIC Central EXE bridge: preserve the original v19 UI and handlers. -->
+<script id="dic-central-bridge">
+(function(){
+  window.__dicGetData=function(){try{return Array.isArray(data)?data:[];}catch(e){return[];}};
+  window.__dicSetData=function(v){try{data=Array.isArray(v)?v:[];return true;}catch(e){return false;}};
+  window.__dicDesktopMode=true;
+  window.addEventListener("error",function(e){try{console.warn("DIC runtime error:",e.message,e.filename,e.lineno);}catch(_){}});
+  window.addEventListener("load",function(){try{if(window.dicCentralSync)window.dicCentralSync.init();}catch(e){console.warn("DIC Central Sync init failed:",e);}});
+})();
+</script>
+<script src="vendor/supabase.min.js"></script>
+<script src="src/central-sync.js"></script>
 </body></html>
 <script id="final-visible-target-sim-render-fix">
 (function(){
@@ -10837,7 +11000,6 @@ window.pickNetworkImeiResult=function(network){const ids={'Mobilink/Warid':'imei
     }}catch(_){}
     return {rows:all.length,matched,dated,qualifying,items:items.length};
   };
-
   /* Wrap file selection only once. The original handler is still called so
      the existing CDR analysis/export engine remains intact. */
   const originalSelected=window.networkImeiResultSelected;
@@ -11836,8 +11998,7 @@ window.pickNetworkImeiResult=function(network){const ids={'Mobilink/Warid':'imei
 
     function currentRow(){
       try{ if(typeof v15GetCase==='function'){const c=v15GetCase();if(c&&c.row)return c.row;} }catch(_){ }
-      try{ const i=typeof mobilinkCurrentCaseIndex==='function'?mobilinkCurrentCaseIndex():-1; if(i>=0&&Array.isArray(window.data)) return window.data[i]||null; }catch(_){ }
-      const idx=Number(document.getElementById('stationEntryIndex')?.value);
+      try{ const i=typeof mobilinkCurrentCaseIndex==='function'?mobilinkCurrentCaseIndex():-1; if(i>=0&&Array.isArray(window.data)) return window.data[i]||null; }catch(_){ }      const idx=Number(document.getElementById('stationEntryIndex')?.value);
       if(Number.isInteger(idx)&&idx>=0&&Array.isArray(window.data)) return window.data[idx]||null;
       return null;
     }
