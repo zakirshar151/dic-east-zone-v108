@@ -1,0 +1,36 @@
+{
+  "name": "dic-central-exe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DIC East Zone Central synchronized Windows desktop application",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "prebuild": "node scripts/vendor-supabase.cjs",
+    "build": "electron-builder --win"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.76.1"
+  },
+  "devDependencies": {
+    "electron": "^38.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "pk.dic.eastzone.central",
+    "productName": "DIC East Zone Central",
+    "directories": { "output": "dist" },
+    "files": ["index.html","electron/**/*","src/**/*","vendor/**/*","scripts/**/*","package.json"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "DIC-East-Zone-Central-Setup-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
