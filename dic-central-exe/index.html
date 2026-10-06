@@ -2221,9 +2221,8 @@ function printCasePDF(){
   </tbody></table>
 <script id="dic-central-bridge">
 (function(){
-  window.__dicGetData=function(){return Array.isArray(window.data)?window.data:[];};
-  window.__dicGetCases=function(){return Array.isArray(window.cases)?window.cases:[];};
-  window.dicSaveMainData=function(){try{return window.dicIDBSave?window.dicIDBSave():Promise.resolve(false);}catch(e){return Promise.resolve(false);}};
+  window.__dicGetData=function(){try{return Array.isArray(data)?data:[];}catch(e){return[];}};
+  window.__dicSetData=function(v){try{data=v;return true;}catch(e){return false;}};
   window.addEventListener("load",function(){try{if(window.dicCentralSync)window.dicCentralSync.init();}catch(e){console.warn("DIC Central Sync init failed",e);}});
 })();
 </script>
