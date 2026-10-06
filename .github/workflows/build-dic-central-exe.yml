@@ -6,6 +6,10 @@ on:
     paths:
       - 'dic-central-exe/**'
       - '.github/workflows/build-dic-central-exe.yml'
+  pull_request:
+    paths:
+      - 'dic-central-exe/**'
+      - '.github/workflows/build-dic-central-exe.yml'
 
 jobs:
   build-windows:
