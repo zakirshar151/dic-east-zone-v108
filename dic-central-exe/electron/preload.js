@@ -1,5 +1,5 @@
-const { contextBridge, app } = require('electron');
+const { contextBridge } = require('electron');
 contextBridge.exposeInMainWorld('dicDesktop', {
   platform: process.platform,
-  appVersion: app.getVersion()
+  appVersion: '1.0.0'
 });
