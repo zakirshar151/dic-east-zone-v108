@@ -1,7 +1,7 @@
 /* DIC Central Sync - Supabase-backed synchronization. Public publishable key only. */
 (function(){
 const SUPABASE_URL='https://uzoygpyqkdtwwwdqgyff.supabase.co';
-const SUPABASE_KEY='sb_publishable_ZDQnm_UMG0q7zS7o4V0Q_ljjIqjcG';
+const SUPABASE_KEY='sb_publishable_ZDQnm_UMG0q7zHfS7o4V0Q_ljjIqjcG';
 const DEVICE_KEY='dic_desktop_device_id_v1'; let client=null,channel=null,profile=null,ready=false,syncing=false;
 const deviceId=localStorage.getItem(DEVICE_KEY)||crypto.randomUUID();localStorage.setItem(DEVICE_KEY,deviceId);const baseline=new Map();
 const getData=()=>window.__dicGetData?window.__dicGetData():[];
