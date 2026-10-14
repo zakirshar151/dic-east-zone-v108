@@ -72,6 +72,7 @@ function createAppMenu(win) {
       label: 'File',
       submenu: [
         { label: 'Open…', accelerator: 'CmdOrCtrl+O', click: () => openBackup(win) },
+        { label: 'DIC Daily Register', click: () => findAndClick(win, ['dic daily register'], 'DIC Daily Register') },
         { type: 'separator' },
         { label: 'New Case', accelerator: 'CmdOrCtrl+N', click: () => findAndClick(win, ['new case', 'add case', 'new record', 'add record', 'new investigation', 'add investigation', 'add fir'], 'New Case') },
         { type: 'separator' },
