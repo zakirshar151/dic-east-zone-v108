@@ -14,7 +14,7 @@ function today(){var d=new Date();return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d
 function iso(v){var m=String(v||'').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?m[3]+'-'+m[2]+'-'+m[1]:String(v||'').match(/^\d{4}-\d{2}-\d{2}$/)?v:''}
 function displayDate(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?m[3]+'/'+m[2]+'/'+m[1]:v||''}
 function nextSr(day){var max=0;rows.forEach(function(r){if(r.groupDate===day)max=Math.max(max,Number(r.sr)||0)});return max+1}
-var css='#dicRegLaunch{position:fixed;z-index:99980;right:22px;bottom:22px;background:#0f766e;color:#fff;border:0;border-radius:12px;padding:14px 18px;font-weight:800;box-shadow:0 5px 20px #0003;cursor:pointer}'+
+var css='#dicRegLaunch{position:fixed;z-index:99980;left:22px;right:auto;top:125px;bottom:auto;background:#0f766e;color:#fff;border:0;border-radius:12px;padding:11px 15px;font-weight:800;box-shadow:0 5px 20px #0003;cursor:pointer;max-width:calc(100vw - 44px)}@media(max-width:700px){#dicRegLaunch{left:10px;top:120px;padding:9px 11px;font-size:12px}}'+
 '#dicRegOverlay{position:fixed;inset:0;z-index:99990;background:#0b1728b8;display:none;align-items:center;justify-content:center;padding:18px;font:14px Arial,sans-serif;color:#172033}'+
 '#dicRegPanel{width:min(1500px,98vw);height:min(92vh,950px);background:#f4f7fb;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 15px 60px #0005}'+
 '#dicRegTop{background:#102b45;color:white;padding:17px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}#dicRegTop h2{margin:0;font-size:22px}#dicRegTop small{display:block;margin-top:5px;color:#d4e4f2}'+
