@@ -20,7 +20,7 @@ function createWindow() {
     win.webContents.executeJavaScript(
       "(function(){var s=document.createElement('script');s.src=" +
       JSON.stringify(pathToFileURL(featurePath).href) +
-      ";s.onerror=function(){console.error('DIC Daily Register module failed to load');};document.head.appendChild(s);})();"
+      ";s.onload=function(){var b=document.getElementById('dicRegLaunch');if(b)b.style.bottom='92px';};s.onerror=function(){console.error('DIC Daily Register module failed to load');};document.head.appendChild(s);})();"
     ).catch(err => console.error('DIC module injection failed:', err));
   });
   win.loadFile(path.join(__dirname, '..', 'index.html'));
