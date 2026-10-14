@@ -4,10 +4,10 @@
   window.__dicV19UiFixes = true;
 
   const getData = () => {
-    try { return (0, eval)('data'); } catch (_) { return null; }
+    try { return eval('data'); } catch (_) { return null; }
   };
   const getFields = () => {
-    try { return (0, eval)('fields'); } catch (_) { return []; }
+    try { return eval('fields'); } catch (_) { return []; }
   };
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -55,12 +55,12 @@
       }
     });
     if (changed) {
-      try { (0, eval)('save()'); } catch (_) {}
-      try { (0, eval)('render()'); } catch (_) {}
+      try { eval('save()'); } catch (_) {}
+      try { eval('render()'); } catch (_) {}
       try {
-        const district = (0, eval)('selectedDistrict');
-        const station = (0, eval)('selectedStation');
-        if (district && station) (0, eval)('renderStationRecords(selectedDistrict, selectedStation)');
+        const district = eval('selectedDistrict');
+        const station = eval('selectedStation');
+        if (district && station) eval('renderStationRecords(selectedDistrict, selectedStation)');
       } catch (_) {}
     }
     return changed;
@@ -127,14 +127,14 @@
           button.addEventListener('mouseleave', () => button.style.background='#fff');
           button.addEventListener('mousedown', event => event.preventDefault());
           button.addEventListener('click', () => {
-            try { (0, eval)('dicSetSearchMode("ALL")'); } catch (_) {}
+            try { eval('dicSetSearchMode("ALL")'); } catch (_) {}
             input.value = q;
             input.dispatchEvent(new Event('input', { bubbles:true }));
             box.style.display='none';
             setTimeout(() => {
               let row = document.querySelector('#body tr[data-index="' + item.index + '"], #stationRecordBody tr[data-index="' + item.index + '"]');
               if (!row) {
-                try { (0, eval)('render()'); } catch (_) {}
+                try { eval('render()'); } catch (_) {}
                 row = document.querySelector('#body tr[data-index="' + item.index + '"], #stationRecordBody tr[data-index="' + item.index + '"]');
               }
               if (row) {
@@ -170,7 +170,7 @@
           return;
         }
         try {
-          const fn = (0, eval)('startRowEdit');
+          const fn = eval('startRowEdit');
           if (typeof fn === 'function') fn(row);
         } catch (_) {}
       });
