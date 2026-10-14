@@ -136,6 +136,9 @@ function createWindow() {
       const workbenchPath = path.join(__dirname, '..', 'src', 'dic-manual-investigation-workbench.js');
       const workbenchScript = await fs.readFile(workbenchPath, 'utf8');
       await win.webContents.executeJavaScript(workbenchScript);
+      const specialCasesPath = path.join(__dirname, '..', 'src', 'dic-special-cases-history.js');
+      const specialCasesScript = await fs.readFile(specialCasesPath, 'utf8');
+      await win.webContents.executeJavaScript(specialCasesScript);
     } catch (error) {
       console.error('DIC UI fixes could not be loaded:', error);
     }
