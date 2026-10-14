@@ -2,7 +2,7 @@ const { app, BrowserWindow, session, Menu, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 
-let mainWindow = null;
+let mainWindow = null; // DIC v19 UI fixes are loaded after the HTML page finishes loading.
 
 function findAndClick(win, labels, purpose) {
   const script = `(() => {
