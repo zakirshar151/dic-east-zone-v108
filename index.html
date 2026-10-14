@@ -745,13 +745,13 @@ IMEI 3"></textarea>
       <div class="entry-wide">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <label class="formlabel" style="margin:0">MSISDN / SIM NUMBERS</label>
-          <button type="button" class="secondary" onclick="generateCaseMsisdnCDR()" title="CDR by MSISDN: Date of Offence se 5 din pehle, maximum latest 360 days tak">⚡ CDRs by MSISDN</button>
+          <button type="button" class="secondary" onclick="generateCaseMsisdnCDR()" title="Date of Offence se 5 din pehle se aaj tak CDR by MSISDN format banaye">⚡ CDRs by MSISDN</button>
         </div>
         <textarea id="entryMSISDN" class="entry-area" rows="4" oninput="updateManualCaseStatusVisibility()" placeholder="923005513001
 923042254705
 923076636152
 923239101349"></textarea>
-        <div class="small" style="margin-top:5px">Numbers enter/auto-fill hone ke baad <b>CDRs by MSISDN</b> dabayein. Format <b>Date of Offence se 5 din pehle → Current Date</b> banega; agar date purani ho to provider limit ke mutabiq latest 360 days ka window use hoga. Tamam MSISDNs include honge.</div>
+        <div class="small" style="margin-top:5px">Numbers enter/auto-fill hone ke baad <b>CDRs by MSISDN</b> dabayein. Format <b>Date of Offence se 5 din pehle → Current Date</b> automatically banega aur tamam MSISDNs include honge.</div>
       </div>
     </div>
 
@@ -997,7 +997,8 @@ const DIC_IDB_STORE="case_store";
 const DIC_IDB_VERSION=1;
 let dicIdbPromise=null;
 function dicOpenIDB(){
-  if(!window.indexedDB)return Promise.reject(new Error("IndexedDB unavailable"));  if(dicIdbPromise)return dicIdbPromise;
+  if(!window.indexedDB)return Promise.reject(new Error("IndexedDB unavailable"));
+  if(dicIdbPromise)return dicIdbPromise;
   dicIdbPromise=new Promise((resolve,reject)=>{
     const req=indexedDB.open(DIC_IDB_NAME,DIC_IDB_VERSION);
     req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(DIC_IDB_STORE))db.createObjectStore(DIC_IDB_STORE);};
@@ -1997,6 +1998,7 @@ async function processUnifiedEnrichment(){
     setEnrichmentStatus(`Complete — ${total.files} file(s), ${total.rows} source row(s), ${total.matched} match(es), ${total.updates} field update(s). MSISDN: ${total.msUpdates}, Use Period: ${total.periodUpdates}, Subscriber: ${total.subscriberUpdates}, Location: ${total.locationUpdates}. ${details.join(" | ")}`);
   }catch(err){console.error(err);setEnrichmentStatus("Data process nahi ho saka: "+err.message,false);}
 }
+
 function clearUnifiedEnrichment(){
   const p=document.getElementById("unifiedEnrichmentPaste"),f=document.getElementById("unifiedEnrichmentFiles");
   if(p)p.value=""; if(f)f.value=""; setEnrichmentStatus("");
@@ -2995,7 +2997,8 @@ function zamanRiskForPeriod(period,offence){
   if(startDiff===1) return {type:'suspect',label:'SUSPECT\nUSED 1ST DAY AFTER',rank:1};
   if(startDiff===2) return {type:'suspect',label:'SUSPECT\nUSED 2ND DAY AFTER',rank:2};
   if(startDiff===3) return {type:'suspect',label:'SUSPECT\nUSED 3RD DAY AFTER',rank:3};
-  return {type:'',label:'',rank:10};}
+  return {type:'',label:'',rank:10};
+}
 function zamanBuildDetailRows(r){
   /*
     v73 FIX — when the Zong/IMEI-result analyzer has an explicit
@@ -3994,7 +3997,8 @@ function restoreCasesFromIDB(){
     const tx=db.transaction(CASE_IDB_STORE,"readonly");
     const req=tx.objectStore(CASE_IDB_STORE).get("all");
     req.onsuccess=()=>resolve(req.result);
-    req.onerror=()=>reject(req.error);  })).then(saved=>{
+    req.onerror=()=>reject(req.error);
+  })).then(saved=>{
     if(Array.isArray(saved)){
       cases=saved;
       try{renderCaseCards();updateActiveCaseBar();}catch(e){}
@@ -4993,7 +4997,8 @@ async function analyzeUfoneImeiResults(){
    2) the common CDR investigation report.
    The same File objects are passed directly to the CDR analyzer; users
    do not need to upload the file a second time.
-*/async function runUnifiedNetworkImeiAndCdr(network, imeiAnalyzer){
+*/
+async function runUnifiedNetworkImeiAndCdr(network, imeiAnalyzer){
   const files=networkImeiResultFiles[network]||[];
   if(!files.length){
     alert(network+" ki IMEI Result ya CDR file pehle attach karein.");
@@ -5994,6 +5999,7 @@ async function analyzeMobilinkCdrForImeiCase(){
     box.style.color='#166534';
   }
 
+
   // Save qualifying target-IMEI rows for the highlighted review and exports.
   const periodByImei=new Map();
   matched.forEach(x=>{
@@ -6991,7 +6997,8 @@ async function runEnhancedIntel(){
     enhancedIntelReport={
       generatedAt:new Date().toLocaleString(), totalRows:rows.length, uniqueImeis:allUniqueImeis.length,
       caseImeis:caseImeis.length, matchedCaseImeis:caseImeis.filter(x=>usedImeis.has(x)).length,
-      uniqueMsisdns:allUniqueMs.length, incomingCalls,outgoingCalls,incomingSms,outgoingSms,unknownEvents,      bContacts:topB, dayTop, nightTop, locationTable:Object.entries(perLoc).sort((a,b)=>b[1].total-a[1].total).slice(0,30).map(([l,v])=>[l,v.day,v.night,v.total]),
+      uniqueMsisdns:allUniqueMs.length, incomingCalls,outgoingCalls,incomingSms,outgoingSms,unknownEvents,
+      bContacts:topB, dayTop, nightTop, locationTable:Object.entries(perLoc).sort((a,b)=>b[1].total-a[1].total).slice(0,30).map(([l,v])=>[l,v.day,v.night,v.total]),
       otherSims:[...new Map([...otherSims,...dbOther].map(x=>[x[0]+"|"+x[1],x])).values()],
       simFile:!!simFile, simError, caseCnics, caseMsisdns, rows
     };
@@ -7990,7 +7997,8 @@ async function v18ReadNetworkTargetFiles(network,files,caseImeis,offenceISO,toda
   const caseSet=new Set(caseImeis),from=new Date(offenceISO+'T00:00:00'),to=new Date(todayISO+'T23:59:59.999'),exportSheets=[],targetNormalized=[];
   for(const file of (files||[])){
     const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true,raw:true});
-    for(const sn of wb.SheetNames){      const matrix=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:true,blankrows:false}),parsed=v18BuildTargetSheet(matrix,network,caseSet,from,to);
+    for(const sn of wb.SheetNames){
+      const matrix=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:true,blankrows:false}),parsed=v18BuildTargetSheet(matrix,network,caseSet,from,to);
       if(parsed.headers.length&&parsed.targetRows.length){parsed.targetNormalized.forEach(x=>{x.file=file.name;x.sheet=sn;});exportSheets.push({file:file.name,sheet:sn,headers:parsed.headers,rows:parsed.targetRows});targetNormalized.push(...parsed.targetNormalized);}
     }
   }
@@ -8989,7 +8997,8 @@ v15RenderNetworkReview=v20RenderNetworkReview;
   const clean=v=>String(v??'').replace(/\D/g,'');
   const n14=v=>clean(v).slice(0,14);
   const nms=v=>{
-    let x=clean(v);    if(x.startsWith('00'))x=x.slice(2);
+    let x=clean(v);
+    if(x.startsWith('00'))x=x.slice(2);
     if(x.startsWith('92'))return x;
     if(x.startsWith('0')&&x.length>=10)return '92'+x.slice(1);
     return x;
@@ -9988,7 +9997,8 @@ v15RenderNetworkReview=v20RenderNetworkReview;
         if(cm)cm.style.display="none";
       }
 
-      // 3) Finally open the exact case form. selectedStation is now guaranteed.      selectedDistrict=d;
+      // 3) Finally open the exact case form. selectedStation is now guaranteed.
+      selectedDistrict=d;
       selectedStation=ps;
       if(typeof openStationCaseEntry==="function"){
         openStationCaseEntry(index,targetImei);
@@ -10987,7 +10997,8 @@ v15RenderNetworkReview=v20RenderNetworkReview;
     }catch(_){}
     const el=document.getElementById('stationEntryIndex');
     const i=Number(el?.value);
-    if(Number.isInteger(i) && i>=0 && Array.isArray(window.data) && window.data[i])      return {idx:i,row:window.data[i]};
+    if(Number.isInteger(i) && i>=0 && Array.isArray(window.data) && window.data[i])
+      return {idx:i,row:window.data[i]};
     return {idx:-1,row:null};
   }
 
@@ -11567,36 +11578,15 @@ v15RenderNetworkReview=v20RenderNetworkReview;
       return;
     }
 
-    // Robust case-date parsing: date inputs expose ISO (YYYY-MM-DD) even when
-    // the browser visually displays a localized date such as 02/01/2025.
     const offenceText=String(document.getElementById('entryOffence')?.value||'').trim();
-    let offence=null;
-    let dm=offenceText.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if(dm){
-      const yy=+dm[1],mm=+dm[2],dd=+dm[3],dt=new Date(yy,mm-1,dd);
-      if(dt.getFullYear()===yy&&dt.getMonth()===mm-1&&dt.getDate()===dd)offence=dt;
-    }
-    if(!offence && typeof parseCaseDDMMYYYY==='function'){
-      try{offence=parseCaseDDMMYYYY(offenceText);}catch(_){offence=null;}
-    }
-    if(!offence){
-      dm=offenceText.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
-      if(dm){const dd=+dm[1],mm=+dm[2],yy=+dm[3],dt=new Date(yy,mm-1,dd);if(dt.getFullYear()===yy&&dt.getMonth()===mm-1&&dt.getDate()===dd)offence=dt;}
-    }
-    if(!offence || isNaN(offence.getTime())){alert('Current case ki Date of Offence valid DD/MM/YYYY ya YYYY-MM-DD format mein nahi mili.');return;}
+    const offence=(typeof parseCaseDDMMYYYY==='function')?parseCaseDDMMYYYY(offenceText):null;
+    if(!offence){alert('Current case ki Date of Offence valid DD/MM/YYYY format mein nahi mili.');return;}
 
     const today=new Date(); today.setHours(0,0,0,0);
-    offence.setHours(0,0,0,0);
     if(offence>today){alert('Date of Offence aaj ki date se future mein hai. CDR period generate nahi kiya ja sakta.');return;}
 
-    // CDR by MSISDN must stay within the latest 360-day provider window.
-    // Start at offence minus 5 days when possible, but never earlier than
-    // today-359 days; the end date is always today.
     const fromDate=new Date(offence.getFullYear(),offence.getMonth(),offence.getDate());
     fromDate.setDate(fromDate.getDate()-5);
-    const latestAllowedStart=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-    latestAllowedStart.setDate(latestAllowedStart.getDate()-359);
-    if(fromDate<latestAllowedStart)fromDate.setTime(latestAllowedStart.getTime());
     const fromISO=isoDate(fromDate), toISO=isoDate(today);
 
     // Keep the case entry's main MSISDN box synchronized with ALL discovered SIMs.
@@ -11773,5 +11763,3 @@ v15RenderNetworkReview=v20RenderNetworkReview;
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
 })();
 </script>
-</body>
-</html>
