@@ -20,7 +20,7 @@
     "appId": "pk.dic.eastzone.central",
     "productName": "DIC East Zone Central",
     "directories": { "output": "dist" },
-    "files": ["index.html","electron/**/*","src/**/*","vendor/**/*","scripts/**/*","package.json"],
+    "files": ["index.html","daily-register.js","electron/**/*","src/**/*","vendor/**/*","scripts/**/*","package.json"],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "artifactName": "DIC-East-Zone-Central-Setup-${version}.exe"
