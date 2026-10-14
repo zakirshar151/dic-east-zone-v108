@@ -133,6 +133,9 @@ function createWindow() {
       const fixPath = path.join(__dirname, '..', 'src', 'dic-v19-ui-fixes.js');
       const fixScript = await fs.readFile(fixPath, 'utf8');
       await win.webContents.executeJavaScript(fixScript);
+      const workbenchPath = path.join(__dirname, '..', 'src', 'dic-manual-investigation-workbench.js');
+      const workbenchScript = await fs.readFile(workbenchPath, 'utf8');
+      await win.webContents.executeJavaScript(workbenchScript);
     } catch (error) {
       console.error('DIC UI fixes could not be loaded:', error);
     }
