@@ -108,41 +108,5 @@
   byId('mwCdrClear').addEventListener('click',function(){byId('mwCdrIdentifier').value='';byId('mwCdrPurpose').value='';byId('mwCdrPreset').value='3';mwSetRange(3);byId('mwCdrStatus').textContent='Search fields clear ho gaye.';});
   mwSetMode('msisdn');mwSetRange(3);
 
-  function addSpecialCasesDistrictShortcut(){
-    if(document.getElementById('dicSpecialCasesDistrictShortcut')) return;
-    var nav=document.querySelector('.district-nav');
-    if(!nav){
-      var districtButtons=[...document.querySelectorAll('button')].filter(function(b){
-        var t=(b.textContent||'').trim();
-        return t==='District East'||t==='District Malir'||t==='District Korangi';
-      });
-      if(districtButtons.length>=3) nav=districtButtons[0].parentElement;
-    }
-    if(!nav) return;
-    var b=document.createElement('button');
-    b.id='dicSpecialCasesDistrictShortcut';
-    b.type='button';
-    b.className='district-btn';
-    b.textContent='★ Special Cases';
-    b.style.cssText='background:#6d28d9!important;color:#fff!important;border:1px solid #6d28d9!important;font-weight:800!important;min-height:48px;border-radius:9px;cursor:pointer;';
-    nav.style.display='grid';
-    nav.style.gridTemplateColumns='repeat(4,minmax(0,1fr))';
-    nav.style.gap='12px';
-    nav.appendChild(b);
-    b.addEventListener('click',function(){
-      var launcher=document.getElementById('dicMwLaunch');
-      if(launcher) launcher.click();
-      var tries=0;
-      var timer=setInterval(function(){
-        tries++;
-        var historyButton=document.getElementById('mwSpecialHistoryBtn');
-        if(historyButton){clearInterval(timer);historyButton.click();}
-        else if(tries>=25){clearInterval(timer);var s=document.getElementById('mwStatus');if(s)s.textContent='Special Cases view load nahi hui. Manual Investigation Data dobara open karein.';}
-      },100);
-    });
-  }
-  addSpecialCasesDistrictShortcut();
-  new MutationObserver(addSpecialCasesDistrictShortcut).observe(document.documentElement,{childList:true,subtree:true});
-
   renderFields();renderRecords();
 })();
