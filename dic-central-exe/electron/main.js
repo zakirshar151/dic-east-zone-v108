@@ -128,6 +128,15 @@ function createWindow() {
   });
   mainWindow = win;
   win.loadFile(path.join(__dirname, '..', 'index.html'));
+  win.webContents.on('did-finish-load', async () => {
+    try {
+      const fixPath = path.join(__dirname, '..', 'src', 'dic-v19-ui-fixes.js');
+      const fixScript = await fs.readFile(fixPath, 'utf8');
+      await win.webContents.executeJavaScript(fixScript);
+    } catch (error) {
+      console.error('DIC UI fixes could not be loaded:', error);
+    }
+  });
   createAppMenu(win);
   win.on('closed', () => { if (mainWindow === win) mainWindow = null; });
 }
